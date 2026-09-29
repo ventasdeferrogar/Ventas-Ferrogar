@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Corte de Caja - Grupo Ferrogar & Construgar</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Pantalla de Login -->
+    <div id="loginScreen" class="fixed inset-0 bg-brand-900 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-8 space-y-6 shadow-2xl">
+            <div class="text-center space-y-2">
+                <div class="inline-block bg-brand-900 text-white p-3 rounded-2xl text-2xl shadow">
+                    <i class="fa-solid fa-cash-register"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-wide text-slate-900">CONTROL DE CORTE DE CAJA</h1>
+                <p class="text-xs text-slate-500">Ferretería Ferrogar & Construgar</p>
+            </div>
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Usuario</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <input type="text" id="loginUser" required placeholder="Ingrese su usuario" class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Contraseña</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" id="loginPass" required placeholder="Ingrese su contraseña" class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                </div>
+                <div id="loginError" class="text-xs text-rose-600 font-semibold text-center hidden">
+                    Usuario o contraseña incorrectos.
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white py-3 rounded-xl font-bold text-sm transition shadow-lg flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Iniciar Sesión</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Top Header -->
+    <header class="bg-brand-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center space-x-3 mb-3 md:mb-0">
+                <div class="bg-white text-brand-900 p-2 rounded-lg font-bold text-xl shadow">
+                    <i class="fa-solid fa-cash-register"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide">CONTROL DE CORTE DE CAJA</h1>
+                    <p class="text-xs text-brand-200">Ferretería Ferrogar & Construgar</p>
+                </div>
+            </div>
+            <!-- Sync / Google Sheets Config Modal Trigger -->
+            <div class="flex items-center space-x-3">
+                <div id="syncStatus" class="flex items-center space-x-2 bg-brand-800 px-3 py-1.5 rounded-full text-xs font-medium border border-brand-700">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="syncText">Google Apps Script Conectado</span>
+                </div>
+                <button onclick="openConfigModal()" class="bg-brand-700 hover:bg-brand-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1 shadow">
+                    <i class="fa-solid fa-gear"></i> <span>Configurar URL Web App</span>
+                </button>
+                <button onclick="handleLogout()" class="bg-rose-700 hover:bg-rose-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1 shadow">
+                    <i class="fa-solid fa-right-from-bracket"></i> <span>Cerrar Sesión</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="bg-white shadow border-b border-slate-200 overflow-x-auto">
+        <div class="max-w-7xl mx-auto px-4 flex space-x-6 min-w-max">
+            <button onclick="switchTab('kpiTab')" id="btnKpiTab" class="py-4 px-2 border-b-2 border-brand-600 text-brand-700 font-bold text-sm flex items-center space-x-2 transition">
+                <i class="fa-solid fa-chart-pie text-brand-600"></i>
+                <span>KPIs Sucursales</span>
+            </button>
+            <button onclick="switchTab('ventasTab')" id="btnVentasTab" class="py-4 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-semibold text-sm flex items-center space-x-2 transition">
+                <i class="fa-solid fa-chart-line text-slate-400"></i>
+                <span>Ventas Semanales / Mensuales</span>
+            </button>
+            <button onclick="switchTab('inputTab')" id="btnInputTab" class="py-4 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-semibold text-sm flex items-center space-x-2 transition">
+                <i class="fa-solid fa-file-invoice-dollar text-slate-400"></i>
+                <span>Ingreso de Corte Diario</span>
+            </button>
+            <button onclick="switchTab('searchTab')" id="btnSearchTab" class="py-4 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-semibold text-sm flex items-center space-x-2 transition">
+                <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+                <span>Buscar Cortes</span>
+            </button>
+            <button onclick="switchTab('editTab')" id="btnEditTab" class="py-4 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-semibold text-sm flex items-center space-x-2 transition">
+                <i class="fa-solid fa-pen-to-square text-slate-400"></i>
+                <span>Editar Corte</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8">
+
+        <!-- ================= TAB 1: KPI SUCURSALES ================= -->
+        <div id="kpiTab" class="space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200 gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Resumen Ejecutivo por Sucursal</h2>
+                    <p class="text-sm text-slate-500">Visualización en tiempo real de ingresos, egresos y neto (Ingresos - Egresos) de la base de datos.</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Filtrar por Fecha:</label>
+                        <input type="date" id="kpiDateFilter" onchange="loadKPIs()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                    <button onclick="loadKPIs()" class="mt-5 bg-brand-600 hover:bg-brand-700 text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition shadow flex items-center space-x-1">
+                        <i class="fa-solid fa-rotate"></i> <span>Actualizar</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- KPI Cards Grid -->
+            <div id="kpiContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Sucursales se cargan dinámicamente aquí -->
+            </div>
+        </div>
+
+        <!-- ================= TAB NUEVA: VENTAS SEMANALES / MENSUALES ================= -->
+        <div id="ventasTab" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-chart-line text-brand-600 mr-2"></i> Reporte de Ventas Semanales / Mensuales / Anuales</h2>
+                        <p class="text-sm text-slate-500">Seleccione el tipo de período (Semana, Mes o Año) y la fecha de referencia para consultar las ventas consolidadas por sucursal.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Período:</label>
+                        <select id="tipoPeriodoVentas" onchange="toggleFiltroPeriodo()" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white font-medium">
+                            <option value="semana">Semana (Lunes a Domingo)</option>
+                            <option value="mes">Mes</option>
+                            <option value="anio">Año</option>
+                        </select>
+                    </div>
+                    <div id="wrapperFiltroFecha">
+                        <label id="labelFechaFiltro" class="block text-xs font-semibold text-slate-600 mb-1">Seleccionar Fecha (Semana / Día):</label>
+                        <input type="date" id="filtroVentasFecha" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                    </div>
+                    <div id="wrapperFiltroMes" class="hidden">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Seleccionar Mes:</label>
+                        <input type="month" id="filtroVentasMes" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                    </div>
+                    <div id="wrapperFiltroAnio" class="hidden">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Seleccionar Año:</label>
+                        <select id="filtroVentasAnio" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                            <!-- Años dinámicos -->
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="cargarReporteVentas()" class="w-full bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shadow flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-magnifying-glass-chart"></i> <span>Consultar Ventas</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="rangoCalculadoInfo" class="text-xs text-brand-800 bg-brand-50 p-2.5 rounded-lg border border-brand-200 font-medium">
+                    Período actual seleccionado: Sin calcular
+                </div>
+            </div>
+
+            <!-- Resumen Total Periodo -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-slate-900 text-white p-6 rounded-xl shadow-lg flex justify-between items-center">
+                    <div>
+                        <span class="block text-xs text-slate-400 font-semibold uppercase tracking-wider">Total Vendido en el Período</span>
+                        <span id="ventasTotalesPeriodoLbl" class="text-2xl font-extrabold text-emerald-400">$0.00</span>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded-xl text-emerald-400 text-xl font-bold">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex justify-between items-center">
+                    <div>
+                        <span class="block text-xs text-slate-500 font-semibold uppercase tracking-wider">Sucursal con Mayor Venta</span>
+                        <span id="sucursalTopVentasLbl" class="text-xl font-bold text-slate-900">N/D</span>
+                    </div>
+                    <div class="bg-brand-50 p-3 rounded-xl text-brand-600 text-xl font-bold border border-brand-200">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjetas / Detalle por Sucursal -->
+            <div id="ventasSucursalesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Se cargan dinámicamente -->
+            </div>
+        </div>
+
+        <!-- ================= TAB 2: INGRESO DE CORTE DIARIO ================= -->
+        <div id="inputTab" class="hidden space-y-6">
+            <form id="corteForm" onsubmit="submitCorte(event)" class="bg-white shadow-sm rounded-xl border border-slate-200 p-6 md:p-8 space-y-8">
+                
+                <!-- Encabezado del Formulario -->
+                <div class="border-b border-slate-200 pb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-cash-register text-brand-600 mr-2"></i> Reporte de Ingresos y Egresos de Caja</h2>
+                        <span class="text-xs bg-brand-50 text-brand-700 px-3 py-1 rounded-full font-semibold border border-brand-200">Creación Automática de Hoja Diaria en Google Sheets</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1">SUCURSAL <span class="text-red-500">*</span></label>
+                            <select id="sucursal" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white">
+                                <option value="">-- Seleccione Sucursal --</option>
+                                <option value="FG MATRIZ">FG MATRIZ</option>
+                                <option value="FG HIERROGAR">FG HIERROGAR</option>
+                                <option value="FG VIÑEDO">FG VIÑEDO</option>
+                                <option value="FG COMALAPA">FG COMALAPA</option>
+                                <option value="CONSTRUGAR AUTOPISTA">CONSTRUGAR AUTOPISTA</option>
+                                <option value="CONSTRUGAR AGUILA">CONSTRUGAR AGUILA</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1">FECHA <span class="text-red-500">*</span></label>
+                            <input type="date" id="fecha" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SALDO INICIAL -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <label class="block text-sm font-bold text-slate-700 mb-2">SALDO INICIAL</label>
+                    <div class="relative max-w-xs">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 font-bold">$</span>
+                        <input type="number" step="0.01" id="saldoInicial" value="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- SECCIÓN INGRESOS -->
+                <div class="space-y-4">
+                    <h3 class="text-base font-bold text-brand-800 border-b pb-2 flex items-center">
+                        <i class="fa-solid fa-arrow-trend-up mr-2 text-emerald-600"></i> INGRESOS
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Ingresos por Venta Consumidor Final</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <input type="number" step="0.01" id="ventaConsumidor" value="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Ingresos por Venta Contribuyentes</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <input type="number" step="0.01" id="ventaContribuyentes" value="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Ingresos por Cuentas por Cobrar</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <input type="number" step="0.01" id="ingresosCxc" value="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Otros Ingresos</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <input type="number" step="0.01" id="otrosIngresos" value="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end bg-emerald-50 p-3 rounded-lg border border-emerald-200">
+                        <span class="text-sm font-bold text-emerald-900 mr-4">TOTAL INGRESOS:</span>
+                        <span id="totalIngresosLbl" class="text-lg font-extrabold text-emerald-700">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN EGRESOS -->
+                <div class="space-y-4">
+                    <h3 class="text-base font-bold text-brand-800 border-b pb-2 flex items-center">
+                        <i class="fa-solid fa-arrow-trend-down mr-2 text-rose-600"></i> EGRESOS
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Cobros por Tarjetas</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <input type="number" step="0.01" id="cobrosTarjetas" value="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Cobros por Transferencias o Depósitos</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <input type="number" step="0.01" id="cobrosTransferencias" value="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Retiros Parciales</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <input type="number" step="0.01" id="retirosParciales" value="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- NUEVO: Mostrar total de Egresos base (Tarjetas, Transf, Retiros) -->
+                    <div class="flex justify-end bg-rose-50 p-3 rounded-lg border border-rose-200 mt-4">
+                        <span class="text-sm font-bold text-rose-900 mr-4">TOTAL EGRESOS (Tarjetas/Transf/Retiros):</span>
+                        <span id="totalEgresosBaseLbl" class="text-lg font-extrabold text-rose-700">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN DINÁMICA: CUENTAS POR COBRAR CLIENTES -->
+                <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-800"><i class="fa-solid fa-users mr-1 text-brand-600"></i> CUENTAS POR COBRAR CLIENTES</h4>
+                            <p class="text-xs text-slate-500">Nombre del cliente y número de factura</p>
+                        </div>
+                        <button type="button" onclick="addCxcRow('cxcContainer')" class="bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1 shadow">
+                            <i class="fa-solid fa-plus"></i> <span>Agregar Cliente</span>
+                        </button>
+                    </div>
+                    <div id="cxcContainer" class="space-y-2">
+                        <!-- Filas dinámicas aquí -->
+                    </div>
+                    <div class="flex justify-end pt-2 border-t border-slate-200">
+                        <span class="text-xs font-bold text-slate-700 mr-4">TOTAL CUENTAS POR COBRAR:</span>
+                        <span id="totalCxcLbl" class="text-sm font-bold text-slate-900">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN DINÁMICA: EGRESOS POR COMPRAS O PAGOS EN EFECTIVO -->
+                <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-800"><i class="fa-solid fa-receipt mr-1 text-rose-600"></i> EGRESOS POR COMPRAS O PAGOS EN EFECTIVO</h4>
+                            <p class="text-xs text-slate-500">Nombre del proveedor y número de factura</p>
+                        </div>
+                        <button type="button" onclick="addEgresoRow('egresoContainer')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1 shadow">
+                            <i class="fa-solid fa-plus"></i> <span>Agregar Egreso</span>
+                        </button>
+                    </div>
+                    <div id="egresoContainer" class="space-y-2">
+                        <!-- Filas dinámicas aquí -->
+                    </div>
+                    <div class="flex justify-end pt-2 border-t border-slate-200">
+                        <span class="text-xs font-bold text-slate-700 mr-4">TOTAL EGRESOS EFECTIVO:</span>
+                        <span id="totalEgresosEfectivoLbl" class="text-sm font-bold text-rose-700">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- RESUMEN FINAL Y CUADRE -->
+                <div class="bg-slate-900 text-white p-6 rounded-xl space-y-4 shadow-lg">
+                    <h3 class="text-base font-bold text-emerald-400 border-b border-slate-800 pb-2">CUADRE Y RESUMEN DE CAJA</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <span class="block text-xs text-slate-400">TOTAL DE EGRESOS GENERAL</span>
+                            <span id="totalEgresosGeneralLbl" class="text-xl font-bold text-rose-400">$0.00</span>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-slate-400">INGRESOS - EGRESOS (NETO)</span>
+                            <span id="ingresosMenosEgresosLbl" class="text-xl font-bold text-emerald-400">$0.00</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-300 mb-1">ÚLTIMO RETIRO</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <input type="number" step="0.01" id="ultimoRetiro" value="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-800">
+                        <div class="flex justify-between items-center bg-slate-800 p-3 rounded-lg">
+                            <span class="text-sm font-medium text-slate-300">SOBRANTE:</span>
+                            <span id="sobranteLbl" class="text-lg font-bold text-emerald-400">$0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-800 p-3 rounded-lg">
+                            <span class="text-sm font-medium text-slate-300">FALTANTE:</span>
+                            <span id="faltanteLbl" class="text-lg font-bold text-rose-400">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CORRELATIVOS Y FIRMAS -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-200">
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-bold text-slate-800">CORRELATIVOS DE FACTURAS</h4>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Consumidor Final (Del - Al)</label>
+                            <div class="flex space-x-2">
+                                <input type="text" id="cfDel" placeholder="Del" class="w-1/2 border border-slate-300 rounded-lg p-2 text-sm">
+                                <input type="text" id="cfAl" placeholder="Al" class="w-1/2 border border-slate-300 rounded-lg p-2 text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Crédito Fiscal (Del - Al)</label>
+                            <div class="flex space-x-2">
+                                <input type="text" id="ccfDel" placeholder="Del" class="w-1/2 border border-slate-300 rounded-lg p-2 text-sm">
+                                <input type="text" id="ccfAl" placeholder="Al" class="w-1/2 border border-slate-300 rounded-lg p-2 text-sm">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-bold text-slate-800">RESPONSABLES</h4>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre de Cajera(o)</label>
+                            <input type="text" id="nombreCajera" class="w-full border border-slate-300 rounded-lg p-2 text-sm" placeholder="Nombre completo">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre de Encargada(o)</label>
+                            <input type="text" id="nombreEncargada" class="w-full border border-slate-300 rounded-lg p-2 text-sm" placeholder="Nombre completo">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botón de Envío -->
+                <div class="flex justify-end pt-6 border-t border-slate-200">
+                    <button type="submit" id="btnSubmitCorte" class="bg-brand-600 hover:bg-brand-700 text-white px-8 py-3 rounded-xl font-bold text-base transition shadow-lg flex items-center space-x-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Guardar Corte de Caja en Google Sheets</span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- ================= TAB 3: BUSCAR / VISUALIZAR CORTES ================= -->
+        <div id="searchTab" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                <h2 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-magnifying-glass text-brand-600 mr-2"></i> Búsqueda y Visualización de Cortes de Caja</h2>
+                <p class="text-sm text-slate-500">Filtra por sucursal y rango de fechas para consultar registros detallados.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Sucursal:</label>
+                        <select id="searchSucursal" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                            <option value="">-- Todas las Sucursales --</option>
+                            <option value="FG MATRIZ">FG MATRIZ</option>
+                            <option value="FG HIERROGAR">FG HIERROGAR</option>
+                            <option value="FG VIÑEDO">FG VIÑEDO</option>
+                            <option value="FG COMALAPA">FG COMALAPA</option>
+                            <option value="CONSTRUGAR AUTOPISTA">CONSTRUGAR AUTOPISTA</option>
+                            <option value="CONSTRUGAR AGUILA">CONSTRUGAR AGUILA</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha:</label>
+                        <input type="date" id="searchFecha" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="buscarCortes()" class="w-full bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shadow flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-filter"></i> <span>Aplicar Filtros</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Resultados -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                            <tr>
+                                <th class="p-3 font-bold">Fecha</th>
+                                <th class="p-3 font-bold">Sucursal</th>
+                                <th class="p-3 font-bold">Cajera(o)</th>
+                                <th class="p-3 font-bold text-right">Ingresos</th>
+                                <th class="p-3 font-bold text-right">Egresos</th>
+                                <th class="p-3 font-bold text-right">Neto</th>
+                                <th class="p-3 font-bold text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaResultadosCortes" class="divide-y divide-slate-200">
+                            <tr>
+                                <td colspan="7" class="p-6 text-center text-slate-400">Utilice los filtros y presione "Aplicar Filtros" para consultar registros.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 4: EDITAR CORTE DE CAJA ================= -->
+        <div id="editTab" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                <h2 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-pen-to-square text-brand-600 mr-2"></i> Edición de Corte de Caja</h2>
+                <p class="text-sm text-slate-500">Seleccione la sucursal y la fecha para cargar un corte existente y modificar sus valores.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Sucursal a Editar:</label>
+                        <select id="editLoadSucursal" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white" required>
+                            <option value="">-- Seleccione Sucursal --</option>
+                            <option value="FG MATRIZ">FG MATRIZ</option>
+                            <option value="FG HIERROGAR">FG HIERROGAR</option>
+                            <option value="FG VIÑEDO">FG VIÑEDO</option>
+                            <option value="FG COMALAPA">FG COMALAPA</option>
+                            <option value="CONSTRUGAR AUTOPISTA">CONSTRUGAR AUTOPISTA</option>
+                            <option value="CONSTRUGAR AGUILA">CONSTRUGAR AGUILA</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha del Corte:</label>
+                        <input type="date" id="editLoadFecha" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white" required>
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="cargarCorteParaEditar()" class="w-full bg-brand-700 hover:bg-brand-800 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shadow flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-cloud-arrow-down"></i> <span>Cargar para Editar</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario de Edición -->
+            <form id="editCorteForm" onsubmit="guardarEdicionCorte(event)" class="bg-white shadow-sm rounded-xl border border-slate-200 p-6 md:p-8 space-y-8 hidden">
+                <div class="border-b border-slate-200 pb-4 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-slate-900">Editando Registro: <span id="editInfoLabel" class="text-brand-600"></span></h3>
+                    <span class="text-xs bg-amber-50 text-amber-700 px-3 py-1 rounded-full font-semibold border border-amber-200">Modo Edición Activo</span>
+                </div>
+
+                <!-- SALDO INICIAL -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <label class="block text-sm font-bold text-slate-700 mb-2">SALDO INICIAL</label>
+                    <div class="relative max-w-xs">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 font-bold">$</span>
+                        <input type="number" step="0.01" id="editSaldoInicial" value="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- SECCIÓN INGRESOS EDIT -->
+                <div class="space-y-4">
+                    <h3 class="text-base font-bold text-brand-800 border-b pb-2 flex items-center">
+                        <i class="fa-solid fa-arrow-trend-up mr-2 text-emerald-600"></i> INGRESOS
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Ingresos por Venta Consumidor Final</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <input type="number" step="0.01" id="editVentaConsumidor" value="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Ingresos por Venta Contribuyentes</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <input type="number" step="0.01" id="editVentaContribuyentes" value="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Ingresos por Cuentas por Cobrar</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <input type="number" step="0.01" id="editIngresosCxc" value="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Otros Ingresos</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <input type="number" step="0.01" id="editOtrosIngresos" value="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end bg-emerald-50 p-3 rounded-lg border border-emerald-200">
+                        <span class="text-sm font-bold text-emerald-900 mr-4">TOTAL INGRESOS:</span>
+                        <span id="editTotalIngresosLbl" class="text-lg font-extrabold text-emerald-700">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN EGRESOS EDIT -->
+                <div class="space-y-4">
+                    <h3 class="text-base font-bold text-brand-800 border-b pb-2 flex items-center">
+                        <i class="fa-solid fa-arrow-trend-down mr-2 text-rose-600"></i> EGRESOS
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Cobros por Tarjetas</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <input type="number" step="0.01" id="editCobrosTarjetas" value="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Cobros por Transferencias o Depósitos</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <input type="number" step="0.01" id="editCobrosTransferencias" value="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Retiros Parciales</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <input type="number" step="0.01" id="editRetirosParciales" value="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- NUEVO: Mostrar total de Egresos base (Tarjetas, Transf, Retiros) en edición -->
+                    <div class="flex justify-end bg-rose-50 p-3 rounded-lg border border-rose-200 mt-4">
+                        <span class="text-sm font-bold text-rose-900 mr-4">TOTAL EGRESOS (Tarjetas/Transf/Retiros):</span>
+                        <span id="editTotalEgresosBaseLbl" class="text-lg font-extrabold text-rose-700">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN DINÁMICA EDIT: CUENTAS POR COBRAR -->
+                <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-800"><i class="fa-solid fa-users mr-1 text-brand-600"></i> CUENTAS POR COBRAR CLIENTES</h4>
+                        </div>
+                        <button type="button" onclick="addCxcRow('editCxcContainer')" class="bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1 shadow">
+                            <i class="fa-solid fa-plus"></i> <span>Agregar Cliente</span>
+                        </button>
+                    </div>
+                    <div id="editCxcContainer" class="space-y-2"></div>
+                    <div class="flex justify-end pt-2 border-t border-slate-200">
+                        <span class="text-xs font-bold text-slate-700 mr-4">TOTAL CUENTAS POR COBRAR:</span>
+                        <span id="editTotalCxcLbl" class="text-sm font-bold text-slate-900">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN DINÁMICA EDIT: EGRESOS EFECTIVO -->
+                <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-800"><i class="fa-solid fa-receipt mr-1 text-rose-600"></i> EGRESOS POR COMPRAS O PAGOS EN EFECTIVO</h4>
+                        </div>
+                        <button type="button" onclick="addEgresoRow('editEgresoContainer')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1 shadow">
+                            <i class="fa-solid fa-plus"></i> <span>Agregar Egreso</span>
+                        </button>
+                    </div>
+                    <div id="editEgresoContainer" class="space-y-2"></div>
+                    <div class="flex justify-end pt-2 border-t border-slate-200">
+                        <span class="text-xs font-bold text-slate-700 mr-4">TOTAL EGRESOS EFECTIVO:</span>
+                        <span id="editTotalEgresosEfectivoLbl" class="text-sm font-bold text-rose-700">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- RESUMEN FINAL EDIT -->
+                <div class="bg-slate-900 text-white p-6 rounded-xl space-y-4 shadow-lg">
+                    <h3 class="text-base font-bold text-emerald-400 border-b border-slate-800 pb-2">CUADRE Y RESUMEN DE CAJA</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <span class="block text-xs text-slate-400">TOTAL DE EGRESOS GENERAL</span>
+                            <span id="editTotalEgresosGeneralLbl" class="text-xl font-bold text-rose-400">$0.00</span>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-slate-400">INGRESOS - EGRESOS (NETO)</span>
+                            <span id="editIngresosMenosEgresosLbl" class="text-xl font-bold text-emerald-400">$0.00</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-300 mb-1">ÚLTIMO RETIRO</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <input type="number" step="0.01" id="editUltimoRetiro" value="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-800">
+                        <div class="flex justify-between items-center bg-slate-800 p-3 rounded-lg">
+                            <span class="text-sm font-medium text-slate-300">SOBRANTE:</span>
+                            <span id="editSobranteLbl" class="text-lg font-bold text-emerald-400">$0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-800 p-3 rounded-lg">
+                            <span class="text-sm font-medium text-slate-300">FALTANTE:</span>
+                            <span id="editFaltanteLbl" class="text-lg font-bold text-rose-400">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CORRELATIVOS Y FIRMAS EDIT -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-200">
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-bold text-slate-800">CORRELATIVOS DE FACTURAS</h4>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Consumidor Final (Del - Al)</label>
+                            <div class="flex space-x-2">
+                                <input type="text" id="editCfDel" placeholder="Del" class="w-1/2 border border-slate-300 rounded-lg p-2 text-sm">
+                                <input type="text" id="editCfAl" placeholder="Al" class="w-1/2 border border-slate-300 rounded-lg p-2 text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Crédito Fiscal (Del - Al)</label>
+                            <div class="flex space-x-2">
+                                <input type="text" id="editCcfDel" placeholder="Del" class="w-1/2 border border-slate-300 rounded-lg p-2 text-sm">
+                                <input type="text" id="editCcfAl" placeholder="Al" class="w-1/2 border border-slate-300 rounded-lg p-2 text-sm">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-bold text-slate-800">RESPONSABLES</h4>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre de Cajera(o)</label>
+                            <input type="text" id="editNombreCajera" class="w-full border border-slate-300 rounded-lg p-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre de Encargada(o)</label>
+                            <input type="text" id="editNombreEncargada" class="w-full border border-slate-300 rounded-lg p-2 text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botón de Actualizar -->
+                <div class="flex justify-end pt-6 border-t border-slate-200">
+                    <button type="submit" id="btnUpdateCorte" class="bg-amber-600 hover:bg-amber-700 text-white px-8 py-3 rounded-xl font-bold text-base transition shadow-lg flex items-center space-x-2">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Actualizar Corte de Caja en Google Sheets</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </main>
+
+    <!-- Modal Configuración Google Apps Script URL -->
+    <div id="configModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-gear text-brand-600 mr-2"></i> Configurar Web App (Google Apps Script)</h3>
+                <button onclick="closeConfigModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <p class="text-xs text-slate-600">
+                Pega aquí la URL de implementación (Web App URL) de tu Google Apps Script para conectar este HTML con Google Sheets y permitir la creación automática de hojas diarias y consulta de KPIs.
+            </p>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">URL de Google Apps Script:</label>
+                <input type="url" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            </div>
+            <div class="flex justify-end space-x-3 pt-3 border-t">
+                <button onclick="closeConfigModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold transition">Cancelar</button>
+                <button onclick="saveScriptUrl()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition shadow">Guardar URL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script de Funcionalidad y Conexión -->
+    <script>
+        // Funciones de Autenticación
+        function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('loginUser').value.trim();
+            const pass = document.getElementById('loginPass').value.trim();
+            const errorDiv = document.getElementById('loginError');
+
+            if (user === 'Ferrogar' && pass === 'Cortesfg') {
+                localStorage.setItem('is_logged_in', 'true');
+                document.getElementById('loginScreen').classList.add('hidden');
+                errorDiv.classList.add('hidden');
+            } else {
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('is_logged_in');
+            document.getElementById('loginUser').value = '';
+            document.getElementById('loginPass').value = '';
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        // Verificar sesión activa al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            const isLoggedIn = localStorage.getItem('is_logged_in');
+            if (isLoggedIn === 'true') {
+                document.getElementById('loginScreen').classList.add('hidden');
+            } else {
+                document.getElementById('loginScreen').classList.remove('hidden');
+            }
+        });
+
+        // Sucursales requeridas
+        const SUCURSALES = [
+            "FG MATRIZ",
+            "FG HIERROGAR",
+            "FG VIÑEDO",
+            "FG COMALAPA",
+            "CONSTRUGAR AUTOPISTA",
+            "CONSTRUGAR AGUILA"
+        ];
+
+        // Función para obtener fecha local en formato YYYY-MM-DD
+        function obtenerFechaLocal() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = obtenerFechaLocal();
+            document.getElementById('fecha').value = today;
+            document.getElementById('kpiDateFilter').value = today;
+            document.getElementById('searchFecha').value = today;
+            document.getElementById('editLoadFecha').value = today;
+            document.getElementById('filtroVentasFecha').value = today;
+            document.getElementById('filtroVentasMes').value = today.substring(0, 7);
+
+            // Poblar selector de años
+            const anioSelect = document.getElementById('filtroVentasAnio');
+            const currentYear = new Date().getFullYear();
+            for (let y = currentYear; y >= currentYear - 5; y--) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                anioSelect.appendChild(opt);
+            }
+
+            const defaultScriptUrl = "https://script.google.com/macros/s/AKfycby83BuEP-_H07Id5NTEtXRzgxawdbFKL7IP70GM0gWEriSkTf5lLvvEGG6FSkBRn3AvLg/exec";
+            if (!localStorage.getItem('gas_script_url')) {
+                localStorage.setItem('gas_script_url', defaultScriptUrl);
+            }
+
+            const savedUrl = localStorage.getItem('gas_script_url') || defaultScriptUrl;
+            document.getElementById('scriptUrlInput').value = savedUrl;
+
+            addCxcRow('cxcContainer');
+            addEgresoRow('egresoContainer');
+            loadKPIs();
+            cargarReporteVentas();
+        });
+
+        // Cambio de pestañas
+        function switchTab(tabId) {
+            ['kpiTab', 'ventasTab', 'inputTab', 'searchTab', 'editTab'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            ['btnKpiTab', 'btnVentasTab', 'btnInputTab', 'btnSearchTab', 'btnEditTab'].forEach(id => {
+                const btn = document.getElementById(id);
+                btn.classList.remove('border-brand-600', 'text-brand-700', 'font-bold');
+                btn.classList.add('border-transparent', 'text-slate-500', 'font-semibold');
+            });
+
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeBtnMap = {
+                'kpiTab': 'btnKpiTab',
+                'ventasTab': 'btnVentasTab',
+                'inputTab': 'btnInputTab',
+                'searchTab': 'btnSearchTab',
+                'editTab': 'btnEditTab'
+            };
+            const activeBtn = document.getElementById(activeBtnMap[tabId]);
+            activeBtn.classList.add('border-brand-600', 'text-brand-700', 'font-bold');
+            activeBtn.classList.remove('border-transparent', 'text-slate-500', 'font-semibold');
+
+            if (tabId === 'kpiTab') loadKPIs();
+            if (tabId === 'ventasTab') cargarReporteVentas();
+        }
+
+        // Toggle filtros de ventas semanales / mensuales / anuales
+        function toggleFiltroPeriodo() {
+            const tipo = document.getElementById('tipoPeriodoVentas').value;
+            document.getElementById('wrapperFiltroFecha').classList.add('hidden');
+            document.getElementById('wrapperFiltroMes').classList.add('hidden');
+            document.getElementById('wrapperFiltroAnio').classList.add('hidden');
+
+            if (tipo === 'semana') {
+                document.getElementById('labelFechaFiltro').textContent = 'Seleccionar Fecha (Semana Lunes a Domingo):';
+                document.getElementById('wrapperFiltroFecha').classList.remove('hidden');
+            } else if (tipo === 'mes') {
+                document.getElementById('wrapperFiltroMes').classList.remove('hidden');
+            } else if (tipo === 'anio') {
+                document.getElementById('wrapperFiltroAnio').classList.remove('hidden');
+            }
+            cargarReporteVentas();
+        }
+
+        // Modal Config
+        function openConfigModal() { document.getElementById('configModal').classList.remove('hidden'); }
+        function closeConfigModal() { document.getElementById('configModal').classList.add('hidden'); }
+        function saveScriptUrl() {
+            const url = document.getElementById('scriptUrlInput').value.trim();
+            localStorage.setItem('gas_script_url', url);
+            closeConfigModal();
+            alert('¡URL de Google Apps Script guardada exitosamente!');
+            loadKPIs();
+        }
+
+        // Agregar fila dinámica Cuentas por Cobrar
+        function addCxcRow(containerId, cliente = '', factura = '', monto = 0) {
+            const container = document.getElementById(containerId);
+            const row = document.createElement('div');
+            row.className = 'flex items-center space-x-2 cxc-row';
+            row.innerHTML = `
+                <input type="text" placeholder="Nombre del Cliente" value="${cliente}" class="w-1/2 border border-slate-300 rounded-lg p-2 text-sm cxc-cliente" required>
+                <input type="text" placeholder="N° de Factura" value="${factura}" class="w-1/4 border border-slate-300 rounded-lg p-2 text-sm cxc-factura" required>
+                <div class="relative w-1/4">
+                    <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400 text-sm">$</span>
+                    <input type="number" step="0.01" placeholder="0.00" value="${monto}" oninput="${containerId === 'editCxcContainer' ? 'calcularTotalesEdit()' : 'calcularTotales()'}" class="w-full pl-6 pr-2 py-2 border border-slate-300 rounded-lg text-sm cxc-monto" required>
+                </div>
+                <button type="button" onclick="this.parentElement.remove(); ${containerId === 'editCxcContainer' ? 'calcularTotalesEdit()' : 'calcularTotales()'};" class="text-rose-500 hover:text-rose-700 p-2"><i class="fa-solid fa-trash-can"></i></button>
+            `;
+            container.appendChild(row);
+            if (containerId === 'editCxcContainer') calcularTotalesEdit(); else calcularTotales();
+        }
+
+        // Agregar fila dinámica Egresos por Compras
+        function addEgresoRow(containerId, proveedor = '', factura = '', monto = 0) {
+            const container = document.getElementById(containerId);
+            const row = document.createElement('div');
+            row.className = 'flex items-center space-x-2 egreso-row';
+            row.innerHTML = `
+                <input type="text" placeholder="Nombre del Proveedor" value="${proveedor}" class="w-1/2 border border-slate-300 rounded-lg p-2 text-sm egreso-proveedor" required>
+                <input type="text" placeholder="N° de Factura" value="${factura}" class="w-1/4 border border-slate-300 rounded-lg p-2 text-sm egreso-factura" required>
+                <div class="relative w-1/4">
+                    <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400 text-sm">$</span>
+                    <input type="number" step="0.01" placeholder="0.00" value="${monto}" oninput="${containerId === 'editEgresoContainer' ? 'calcularTotalesEdit()' : 'calcularTotales()'}" class="w-full pl-6 pr-2 py-2 border border-slate-300 rounded-lg text-sm egreso-monto" required>
+                </div>
+                <button type="button" onclick="this.parentElement.remove(); ${containerId === 'editEgresoContainer' ? 'calcularTotalesEdit()' : 'calcularTotales()'};" class="text-rose-500 hover:text-rose-700 p-2"><i class="fa-solid fa-trash-can"></i></button>
+            `;
+            container.appendChild(row);
+            if (containerId === 'editEgresoContainer') calcularTotalesEdit(); else calcularTotales();
+        }
+
+        // Cálculo Totales Formulario Principal
+        function calcularTotales() {
+            const vc = parseFloat(document.getElementById('ventaConsumidor').value) || 0;
+            const vco = parseFloat(document.getElementById('ventaContribuyentes').value) || 0;
+            const icxc = parseFloat(document.getElementById('ingresosCxc').value) || 0;
+            const oi = parseFloat(document.getElementById('otrosIngresos').value) || 0;
+            const totalIngresos = vc + vco + icxc + oi;
+            document.getElementById('totalIngresosLbl').textContent = `$${totalIngresos.toFixed(2)}`;
+
+            const ct = parseFloat(document.getElementById('cobrosTarjetas').value) || 0;
+            const ctr = parseFloat(document.getElementById('cobrosTransferencias').value) || 0;
+            const rp = parseFloat(document.getElementById('retirosParciales').value) || 0;
+            
+            // NUEVO: Calculamos y mostramos el total de egresos base
+            const totalEgresosBase = ct + ctr + rp;
+            if (document.getElementById('totalEgresosBaseLbl')) {
+                document.getElementById('totalEgresosBaseLbl').textContent = `$${totalEgresosBase.toFixed(2)}`;
+            }
+
+            let totalEgresosEfectivo = 0;
+            document.querySelectorAll('#inputTab .egreso-monto').forEach(input => { totalEgresosEfectivo += parseFloat(input.value) || 0; });
+            document.getElementById('totalEgresosEfectivoLbl').textContent = `$${totalEgresosEfectivo.toFixed(2)}`;
+
+            let totalCxc = 0;
+            document.querySelectorAll('#inputTab .cxc-monto').forEach(input => { totalCxc += parseFloat(input.value) || 0; });
+            document.getElementById('totalCxcLbl').textContent = `$${totalCxc.toFixed(2)}`;
+
+            // NUEVO: Sumamos el totalCxc al total de egresos general
+            const totalEgresosGeneral = ct + ctr + rp + totalEgresosEfectivo + totalCxc;
+            document.getElementById('totalEgresosGeneralLbl').textContent = `$${totalEgresosGeneral.toFixed(2)}`;
+
+            const neto = totalIngresos - totalEgresosGeneral;
+            const netoLbl = document.getElementById('ingresosMenosEgresosLbl');
+            netoLbl.textContent = `$${neto.toFixed(2)}`;
+            netoLbl.className = neto >= 0 ? "text-xl font-bold text-emerald-400" : "text-xl font-bold text-rose-400";
+
+            const ultimoRetiro = parseFloat(document.getElementById('ultimoRetiro').value) || 0;
+            const diferencia = ultimoRetiro - neto;
+            const sobranteLbl = document.getElementById('sobranteLbl');
+            const faltanteLbl = document.getElementById('faltanteLbl');
+
+            if (diferencia > 0) {
+                sobranteLbl.textContent = `$${diferencia.toFixed(2)}`;
+                faltanteLbl.textContent = `$0.00`;
+            } else if (diferencia < 0) {
+                sobranteLbl.textContent = `$0.00`;
+                faltanteLbl.textContent = `$${Math.abs(diferencia).toFixed(2)}`;
+            } else {
+                sobranteLbl.textContent = `$0.00`;
+                faltanteLbl.textContent = `$0.00`;
+            }
+        }
+
+        // Cálculo Totales Formulario Edición
+        function calcularTotalesEdit() {
+            const vc = parseFloat(document.getElementById('editVentaConsumidor').value) || 0;
+            const vco = parseFloat(document.getElementById('editVentaContribuyentes').value) || 0;
+            const icxc = parseFloat(document.getElementById('editIngresosCxc').value) || 0;
+            const oi = parseFloat(document.getElementById('editOtrosIngresos').value) || 0;
+            const totalIngresos = vc + vco + icxc + oi;
+            document.getElementById('editTotalIngresosLbl').textContent = `$${totalIngresos.toFixed(2)}`;
+
+            const ct = parseFloat(document.getElementById('editCobrosTarjetas').value) || 0;
+            const ctr = parseFloat(document.getElementById('editCobrosTransferencias').value) || 0;
+            const rp = parseFloat(document.getElementById('editRetirosParciales').value) || 0;
+
+            // NUEVO: Calculamos y mostramos el total de egresos base en edición
+            const totalEgresosBase = ct + ctr + rp;
+            if (document.getElementById('editTotalEgresosBaseLbl')) {
+                document.getElementById('editTotalEgresosBaseLbl').textContent = `$${totalEgresosBase.toFixed(2)}`;
+            }
+
+            let totalEgresosEfectivo = 0;
+            document.querySelectorAll('#editCorteForm .egreso-monto').forEach(input => { totalEgresosEfectivo += parseFloat(input.value) || 0; });
+            document.getElementById('editTotalEgresosEfectivoLbl').textContent = `$${totalEgresosEfectivo.toFixed(2)}`;
+
+            let totalCxc = 0;
+            document.querySelectorAll('#editCorteForm .cxc-monto').forEach(input => { totalCxc += parseFloat(input.value) || 0; });
+            document.getElementById('editTotalCxcLbl').textContent = `$${totalCxc.toFixed(2)}`;
+
+            // NUEVO: Sumamos el totalCxc al total de egresos general
+            const totalEgresosGeneral = ct + ctr + rp + totalEgresosEfectivo + totalCxc;
+            document.getElementById('editTotalEgresosGeneralLbl').textContent = `$${totalEgresosGeneral.toFixed(2)}`;
+
+            const neto = totalIngresos - totalEgresosGeneral;
+            const netoLbl = document.getElementById('editIngresosMenosEgresosLbl');
+            netoLbl.textContent = `$${neto.toFixed(2)}`;
+            netoLbl.className = neto >= 0 ? "text-xl font-bold text-emerald-400" : "text-xl font-bold text-rose-400";
+
+            const ultimoRetiro = parseFloat(document.getElementById('editUltimoRetiro').value) || 0;
+            const diferencia = ultimoRetiro - neto;
+            const sobranteLbl = document.getElementById('editSobranteLbl');
+            const faltanteLbl = document.getElementById('editFaltanteLbl');
+
+            if (diferencia > 0) {
+                sobranteLbl.textContent = `$${diferencia.toFixed(2)}`;
+                faltanteLbl.textContent = `$0.00`;
+            } else if (diferencia < 0) {
+                sobranteLbl.textContent = `$0.00`;
+                faltanteLbl.textContent = `$${Math.abs(diferencia).toFixed(2)}`;
+            } else {
+                sobranteLbl.textContent = `$0.00`;
+                faltanteLbl.textContent = `$0.00`;
+            }
+        }
+
+        // Cargar KPIs desde Backend
+        async function loadKPIs() {
+            const container = document.getElementById('kpiContainer');
+            const fecha = document.getElementById('kpiDateFilter').value;
+            const scriptUrl = localStorage.getItem('gas_script_url');
+
+            container.innerHTML = `<div class="col-span-full text-center py-8 text-slate-500 font-semibold"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Cargando KPIs desde Google Sheets...</div>`;
+
+            if (!scriptUrl) {
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-amber-600 font-semibold">URL de Google Apps Script no configurada. Haga clic en 'Configurar URL Web App'.</div>`;
+                return;
+            }
+
+            try {
+                const ts = Date.now();
+                const response = await fetch(`${scriptUrl}?action=getKPIs&fecha=${encodeURIComponent(fecha)}&_t=${ts}`, {
+                    method: 'GET',
+                    redirect: 'follow'
+                });
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    container.innerHTML = '';
+                    SUCURSALES.forEach(suc => {
+                        const data = result.data[suc] || { ingresos: 0, egresos: 0, neto: 0 };
+                        const card = document.createElement('div');
+                        card.className = "bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4 hover:shadow-md transition";
+                        card.innerHTML = `
+                            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                                <h3 class="font-bold text-slate-900 text-base">${suc}</h3>
+                                <span class="text-xs bg-slate-100 text-slate-600 font-medium px-2.5 py-1 rounded-md"><i class="fa-regular fa-calendar mr-1"></i>${fecha}</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <span class="block text-xs font-semibold text-slate-500">Ingresos</span>
+                                    <span class="text-lg font-bold text-emerald-600">$${(Number(data.ingresos) || 0).toFixed(2)}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-xs font-semibold text-slate-500">Egresos</span>
+                                    <span class="text-lg font-bold text-rose-600">$${(Number(data.egresos) || 0).toFixed(2)}</span>
+                                </div>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-lg flex justify-between items-center border border-slate-100">
+                                <span class="text-xs font-bold text-slate-700">NETO (Ing. - Egr.):</span>
+                                <span class="text-base font-extrabold ${Number(data.neto) >= 0 ? 'text-brand-700' : 'text-rose-600'}">$${(Number(data.neto) || 0).toFixed(2)}</span>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                } else {
+                    container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error al obtener datos: ${result.message || 'Error desconocido'}</div>`;
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error de conexión con Google Apps Script. Verifique su implementación.</div>`;
+            }
+        }
+
+        // Cargar Reporte de Ventas por Período
+        async function cargarReporteVentas() {
+            const container = document.getElementById('ventasSucursalesContainer');
+            const scriptUrl = localStorage.getItem('gas_script_url');
+            const tipo = document.getElementById('tipoPeriodoVentas').value;
+            const fecha = document.getElementById('filtroVentasFecha').value;
+            const mes = document.getElementById('filtroVentasMes').value;
+            const anio = document.getElementById('filtroVentasAnio').value;
+
+            container.innerHTML = `<div class="col-span-full text-center py-8 text-slate-500 font-semibold"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Calculando reporte de ventas...</div>`;
+
+            if (!scriptUrl) {
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-amber-600 font-semibold">URL de Google Apps Script no configurada.</div>`;
+                return;
+            }
+
+            try {
+                const ts = Date.now();
+                const url = `${scriptUrl}?action=getVentasPeriodo&tipo=${encodeURIComponent(tipo)}&fecha=${encodeURIComponent(fecha)}&mes=${encodeURIComponent(mes)}&anio=${encodeURIComponent(anio)}&_t=${ts}`;
+                const response = await fetch(url, {
+                    method: 'GET',
+                    redirect: 'follow'
+                });
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    document.getElementById('rangoCalculadoInfo').textContent = `Período actual seleccionado: ${result.rangoTexto}`;
+
+                    let totalGeneral = 0;
+                    let maxVenta = -1;
+                    let topSucursal = 'N/D';
+
+                    container.innerHTML = '';
+                    SUCURSALES.forEach(suc => {
+                        const venta = Number(result.data[suc]) || 0;
+                        totalGeneral += venta;
+                        if (venta > maxVenta && venta > 0) {
+                            maxVenta = venta;
+                            topSucursal = suc;
+                        }
+
+                        const card = document.createElement('div');
+                        card.className = "bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-3 hover:shadow-md transition flex justify-between items-center";
+                        card.innerHTML = `
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm">${suc}</h3>
+                                <span class="text-xs text-slate-500">Ventas Totales</span>
+                            </div>
+                            <span class="text-xl font-extrabold text-brand-700">$${venta.toFixed(2)}</span>
+                        `;
+                        container.appendChild(card);
+                    });
+
+                    document.getElementById('ventasTotalesPeriodoLbl').textContent = `$${totalGeneral.toFixed(2)}`;
+                    document.getElementById('sucursalTopVentasLbl').textContent = topSucursal;
+
+                } else {
+                    container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error al obtener ventas: ${result.message || 'Error'}</div>`;
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error de comunicación con Google Apps Script.</div>`;
+            }
+        }
+
+        // Buscar Cortes en la Hoja HISTORICO_CORTES
+        async function buscarCortes() {
+            const tbody = document.getElementById('tablaResultadosCortes');
+            const sucursal = document.getElementById('searchSucursal').value;
+            const fecha = document.getElementById('searchFecha').value;
+            const scriptUrl = localStorage.getItem('gas_script_url');
+
+            tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500 font-semibold"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Buscando cortes...</td></tr>`;
+
+            if (!scriptUrl) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-amber-600 font-semibold">URL de Google Apps Script no configurada.</td></tr>`;
+                return;
+            }
+
+            try {
+                const ts = Date.now();
+                const url = `${scriptUrl}?action=buscarCortes&sucursal=${encodeURIComponent(sucursal)}&fecha=${encodeURIComponent(fecha)}&_t=${ts}`;
+                const response = await fetch(url, {
+                    method: 'GET',
+                    redirect: 'follow'
+                });
+                const result = await response.json();
+
+                if (result.success && result.data && result.data.length > 0) {
+                    tbody.innerHTML = '';
+                    result.data.forEach(item => {
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-slate-50 transition";
+                        tr.innerHTML = `
+                            <td class="p-3 font-medium text-slate-800">${item.fecha}</td>
+                            <td class="p-3 text-slate-700">${item.sucursal}</td>
+                            <td class="p-3 text-slate-600">${item.nombreCajera || 'N/D'}</td>
+                            <td class="p-3 text-right text-emerald-600 font-semibold">$${Number(item.totalIngresos).toFixed(2)}</td>
+                            <td class="p-3 text-right text-rose-600 font-semibold">$${Number(item.totalEgresos).toFixed(2)}</td>
+                            <td class="p-3 text-right font-bold ${Number(item.neto) >= 0 ? 'text-brand-700' : 'text-rose-600'}">$${Number(item.neto).toFixed(2)}</td>
+                            <td class="p-3 text-center">
+                                <button onclick="prepararEdicionDirecta('${item.sucursal}', '${item.fecha}')" class="bg-brand-50 hover:bg-brand-100 text-brand-700 px-2.5 py-1 rounded text-xs font-semibold border border-brand-200 transition">
+                                    <i class="fa-solid fa-pen-to-square mr-1"></i> Editar
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 font-medium">No se encontraron registros de cortes con los filtros seleccionados.</td></tr>`;
+                }
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-rose-600 font-semibold">Error al conectar con Google Apps Script.</td></tr>`;
+            }
+        }
+
+        // Cargar Corte para Formulario de Edición
+        function prepararEdicionDirecta(sucursal, fecha) {
+            document.getElementById('editLoadSucursal').value = sucursal;
+            document.getElementById('editLoadFecha').value = fecha;
+            switchTab('editTab');
+            cargarCorteParaEditar();
+        }
+
+        async function cargarCorteParaEditar() {
+            const sucursal = document.getElementById('editLoadSucursal').value;
+            const fecha = document.getElementById('editLoadFecha').value;
+            const form = document.getElementById('editCorteForm');
+            const scriptUrl = localStorage.getItem('gas_script_url');
+
+            if (!sucursal || !fecha) {
+                alert('Por favor seleccione una sucursal y fecha para cargar.');
+                return;
+            }
+
+            if (!scriptUrl) {
+                alert('URL de Google Apps Script no configurada.');
+                return;
+            }
+
+            try {
+                const ts = Date.now();
+                const response = await fetch(`${scriptUrl}?action=obtenerCorteDetalle&sucursal=${encodeURIComponent(sucursal)}&fecha=${encodeURIComponent(fecha)}&_t=${ts}`, {
+                    method: 'GET',
+                    redirect: 'follow'
+                });
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    const d = result.data;
+                    document.getElementById('editInfoLabel').textContent = `${d.sucursal} - ${d.fecha}`;
+                    document.getElementById('editSaldoInicial').value = d.saldoInicial || 0;
+                    document.getElementById('editVentaConsumidor').value = d.ventaConsumidor || 0;
+                    document.getElementById('editVentaContribuyentes').value = d.ventaContribuyentes || 0;
+                    document.getElementById('editIngresosCxc').value = d.ingresosCxc || 0;
+                    document.getElementById('editOtrosIngresos').value = d.otrosIngresos || 0;
+                    document.getElementById('editCobrosTarjetas').value = d.cobrosTarjetas || 0;
+                    document.getElementById('editCobrosTransferencias').value = d.cobrosTransferencias || 0;
+                    document.getElementById('editRetirosParciales').value = d.retirosParciales || 0;
+                    document.getElementById('editUltimoRetiro').value = d.ultimoRetiro || 0;
+                    document.getElementById('editCfDel').value = d.cfDel || '';
+                    document.getElementById('editCfAl').value = d.cfAl || '';
+                    document.getElementById('editCcfDel').value = d.ccfDel || '';
+                    document.getElementById('editCcfAl').value = d.ccfAl || '';
+                    document.getElementById('editNombreCajera').value = d.nombreCajera || '';
+                    document.getElementById('editNombreEncargada').value = d.nombreEncargada || '';
+
+                    // Limpiar contenedores dinámicos
+                    document.getElementById('editCxcContainer').innerHTML = '';
+                    if (d.cxcClientes && d.cxcClientes.length > 0) {
+                        d.cxcClientes.forEach(c => addCxcRow('editCxcContainer', c.cliente, c.factura, c.monto));
+                    }
+
+                    document.getElementById('editEgresoContainer').innerHTML = '';
+                    if (d.egresosCompras && d.egresosCompras.length > 0) {
+                        d.egresosCompras.forEach(e => addEgresoRow('editEgresoContainer', e.proveedor, e.factura, e.monto));
+                    }
+
+                    calcularTotalesEdit();
+                    form.classList.remove('hidden');
+                } else {
+                    alert(result.message || 'No se encontró el registro especificado.');
+                    form.classList.add('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error al obtener datos de Google Sheets.');
+            }
+        }
+
+        // Guardar Nuevo Corte
+        async function submitCorte(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitCorte');
+            const scriptUrl = localStorage.getItem('gas_script_url');
+
+            if (!scriptUrl) {
+                alert('Configure la URL de Google Apps Script antes de enviar.');
+                return;
+            }
+
+            const cxcClientes = [];
+            document.querySelectorAll('#cxcContainer .cxc-row').forEach(row => {
+                cxcClientes.push({
+                    cliente: row.querySelector('.cxc-cliente').value,
+                    factura: row.querySelector('.cxc-factura').value,
+                    monto: row.querySelector('.cxc-monto').value
+                });
+            });
+
+            const egresosCompras = [];
+            document.querySelectorAll('#egresoContainer .egreso-row').forEach(row => {
+                egresosCompras.push({
+                    proveedor: row.querySelector('.egreso-proveedor').value,
+                    factura: row.querySelector('.egreso-factura').value,
+                    monto: row.querySelector('.egreso-monto').value
+                });
+            });
+
+            const payload = {
+                action: 'guardarCorte',
+                sucursal: document.getElementById('sucursal').value,
+                fecha: document.getElementById('fecha').value,
+                saldoInicial: document.getElementById('saldoInicial').value,
+                ventaConsumidor: document.getElementById('ventaConsumidor').value,
+                ventaContribuyentes: document.getElementById('ventaContribuyentes').value,
+                ingresosCxc: document.getElementById('ingresosCxc').value,
+                otrosIngresos: document.getElementById('otrosIngresos').value,
+                cobrosTarjetas: document.getElementById('cobrosTarjetas').value,
+                cobrosTransferencias: document.getElementById('cobrosTransferencias').value,
+                retirosParciales: document.getElementById('retirosParciales').value,
+                ultimoRetiro: document.getElementById('ultimoRetiro').value,
+                cfDel: document.getElementById('cfDel').value,
+                cfAl: document.getElementById('cfAl').value,
+                ccfDel: document.getElementById('ccfDel').value,
+                ccfAl: document.getElementById('ccfAl').value,
+                nombreCajera: document.getElementById('nombreCajera').value,
+                nombreEncargada: document.getElementById('nombreEncargada').value,
+                cxcClientes: cxcClientes,
+                egresosCompras: egresosCompras
+            };
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Guardando en Google Sheets...</span>`;
+
+            try {
+                const response = await fetch(scriptUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload),
+                    redirect: 'follow'
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('¡Corte de caja guardado exitosamente!');
+                    loadKPIs();
+                    cargarReporteVentas();
+                } else {
+                    alert('Error al guardar: ' + result.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error al enviar los datos a Google Sheets.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>Guardar Corte de Caja en Google Sheets</span>`;
+            }
+        }
+
+        // Guardar Edición de Corte
+        async function guardarEdicionCorte(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnUpdateCorte');
+            const scriptUrl = localStorage.getItem('gas_script_url');
+
+            if (!scriptUrl) {
+                alert('Configure la URL de Google Apps Script.');
+                return;
+            }
+
+            const cxcClientes = [];
+            document.querySelectorAll('#editCxcContainer .cxc-row').forEach(row => {
+                cxcClientes.push({
+                    cliente: row.querySelector('.cxc-cliente').value,
+                    factura: row.querySelector('.cxc-factura').value,
+                    monto: row.querySelector('.cxc-monto').value
+                });
+            });
+
+            const egresosCompras = [];
+            document.querySelectorAll('#editEgresoContainer .egreso-row').forEach(row => {
+                egresosCompras.push({
+                    proveedor: row.querySelector('.egreso-proveedor').value,
+                    factura: row.querySelector('.egreso-factura').value,
+                    monto: row.querySelector('.egreso-monto').value
+                });
+            });
+
+            const payload = {
+                action: 'actualizarCorte',
+                sucursal: document.getElementById('editLoadSucursal').value,
+                fecha: document.getElementById('editLoadFecha').value,
+                saldoInicial: document.getElementById('editSaldoInicial').value,
+                ventaConsumidor: document.getElementById('editVentaConsumidor').value,
+                ventaContribuyentes: document.getElementById('editVentaContribuyentes').value,
+                ingresosCxc: document.getElementById('editIngresosCxc').value,
+                otrosIngresos: document.getElementById('editOtrosIngresos').value,
+                cobrosTarjetas: document.getElementById('editCobrosTarjetas').value,
+                cobrosTransferencias: document.getElementById('editCobrosTransferencias').value,
+                retirosParciales: document.getElementById('editRetirosParciales').value,
+                ultimoRetiro: document.getElementById('editUltimoRetiro').value,
+                cfDel: document.getElementById('editCfDel').value,
+                cfAl: document.getElementById('editCfAl').value,
+                ccfDel: document.getElementById('editCcfDel').value,
+                ccfAl: document.getElementById('editCcfAl').value,
+                nombreCajera: document.getElementById('editNombreCajera').value,
+                nombreEncargada: document.getElementById('editNombreEncargada').value,
+                cxcClientes: cxcClientes,
+                egresosCompras: egresosCompras
+            };
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Actualizando en Google Sheets...</span>`;
+
+            try {
+                const response = await fetch(scriptUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload),
+                    redirect: 'follow'
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('¡Corte de caja actualizado exitosamente!');
+                    loadKPIs();
+                    cargarReporteVentas();
+                } else {
+                    alert('Error al actualizar: ' + result.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error al enviar los datos a Google Sheets.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> <span>Actualizar Corte de Caja en Google Sheets</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
