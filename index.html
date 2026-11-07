@@ -14,11 +14,13 @@
                         brand: {
                             50: '#f0fdf4',
                             100: '#dcfce7',
+                            200: '#bbf7d0',
                             500: '#22c55e',
                             600: '#16a34a',
                             700: '#15803d',
                             800: '#166534',
                             900: '#14532d',
+                            950: '#052e16',
                         }
                     }
                 }
@@ -27,72 +29,130 @@
     </script>
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS (XLSX) for Excel Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- html2pdf.js for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        /* Estilos optimizados para impresión física o Guardar como PDF */
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            #hojaCorteDocumento, #hojaCorteDocumento * {
+                visibility: visible !important;
+            }
+            #hojaCorteDocumento {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 12px !important;
+                box-shadow: none !important;
+                border: none !important;
+                background: white !important;
+            }
+            .no-imprimir {
+                display: none !important;
+            }
+        }
+
+        /* Estilo para simular hoja física */
+        .hoja-papel {
+            background-color: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+    </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
 
     <!-- Pantalla de Login -->
-    <div id="loginScreen" class="fixed inset-0 bg-brand-900 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-8 space-y-6 shadow-2xl">
+    <div id="loginScreen" class="fixed inset-0 bg-brand-950 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-8 space-y-6 shadow-2xl border border-brand-800">
             <div class="text-center space-y-2">
-                <div class="inline-block bg-brand-900 text-white p-3 rounded-2xl text-2xl shadow">
+                <div class="inline-block bg-brand-900 text-white p-3.5 rounded-2xl text-2xl shadow-lg">
                     <i class="fa-solid fa-cash-register"></i>
                 </div>
-                <h1 class="text-xl font-bold tracking-wide text-slate-900">CONTROL DE CORTE DE CAJA</h1>
-                <p class="text-xs text-slate-500">Ferretería Ferrogar & Construgar</p>
+                <h1 class="text-xl font-extrabold tracking-wide text-slate-900">CONTROL DE CORTE DE CAJA</h1>
+                <p class="text-xs text-slate-500 font-medium">Grupo Ferrogar & Construgar</p>
+                <div class="pt-1">
+                    <span class="inline-block bg-brand-50 text-brand-800 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border border-brand-200">
+                        Acceso Seguro por Sucursal
+                    </span>
+                </div>
             </div>
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Usuario</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Usuario</label>
                     <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
                             <i class="fa-solid fa-user"></i>
                         </span>
-                        <input type="text" id="loginUser" required placeholder="Ingrese su usuario" class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <input type="text" id="loginUser" required placeholder="Ingrese usuario" autocomplete="username" class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Contraseña</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Contraseña</label>
                     <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
                             <i class="fa-solid fa-lock"></i>
                         </span>
-                        <input type="password" id="loginPass" required placeholder="Ingrese su contraseña" class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <input type="password" id="loginPass" required placeholder="Ingrese contraseña" autocomplete="current-password" class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                     </div>
                 </div>
-                <div id="loginError" class="text-xs text-rose-600 font-semibold text-center hidden">
-                    Usuario o contraseña incorrectos.
+                <div id="loginError" class="text-xs text-rose-600 font-semibold text-center bg-rose-50 p-2.5 rounded-lg border border-rose-200 hidden">
+                    <i class="fa-solid fa-circle-exclamation mr-1"></i> Usuario o contraseña incorrectos. Verifique sus credenciales.
                 </div>
                 <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white py-3 rounded-xl font-bold text-sm transition shadow-lg flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-right-to-bracket"></i>
                     <span>Iniciar Sesión</span>
                 </button>
             </form>
+            <div class="text-[11px] text-slate-400 text-center border-t border-slate-100 pt-3">
+                Ferrogar (Admin) | Sucursales: Aguila, Autopista, Comalapa, Hierrogar, Viñedo, Matriz
+            </div>
         </div>
     </div>
 
     <!-- Top Header -->
     <header class="bg-brand-900 text-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
-            <div class="flex items-center space-x-3 mb-3 md:mb-0">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
                 <div class="bg-white text-brand-900 p-2 rounded-lg font-bold text-xl shadow">
                     <i class="fa-solid fa-cash-register"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-wide">CONTROL DE CORTE DE CAJA</h1>
-                    <p class="text-xs text-brand-200">Ferretería Ferrogar & Construgar</p>
+                    <h1 class="text-lg md:text-xl font-bold tracking-wide">CONTROL DE CORTE DE CAJA</h1>
+                    <p class="text-xs text-brand-200">Grupo Ferrogar & Construgar</p>
                 </div>
             </div>
-            <!-- Sync / Google Sheets Config Modal Trigger -->
-            <div class="flex items-center space-x-3">
-                <div id="syncStatus" class="flex items-center space-x-2 bg-brand-800 px-3 py-1.5 rounded-full text-xs font-medium border border-brand-700">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span id="syncText">Google Apps Script Conectado</span>
+
+            <!-- Información del Usuario Conectado y Acciones -->
+            <div class="flex flex-wrap items-center justify-center md:justify-end gap-2 text-xs">
+                <!-- Badge Usuario Actual -->
+                <div id="userBadge" class="flex items-center space-x-2 bg-brand-800 px-3 py-1.5 rounded-lg border border-brand-700 shadow-sm">
+                    <i class="fa-solid fa-circle-user text-emerald-400 text-sm"></i>
+                    <span id="userBadgeName" class="font-bold">Usuario: Invitado</span>
+                    <span id="userBadgeRole" class="px-2 py-0.5 rounded text-[10px] bg-emerald-500 text-brand-950 font-extrabold uppercase">SUCURSAL</span>
                 </div>
-                <button onclick="openConfigModal()" class="bg-brand-700 hover:bg-brand-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1 shadow">
-                    <i class="fa-solid fa-gear"></i> <span>Configurar URL Web App</span>
+
+                <!-- Estado Sync Apps Script -->
+                <div id="syncStatus" class="flex items-center space-x-1.5 bg-brand-800 px-2.5 py-1.5 rounded-lg border border-brand-700" title="Conexión con Google Sheets">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="syncText" class="text-[11px] font-medium hidden sm:inline">Conectado</span>
+                </div>
+
+                <!-- Botón Config URL Web App (Solo Admin) -->
+                <button id="btnConfigModalTrigger" onclick="openConfigModal()" class="bg-brand-700 hover:bg-brand-600 text-white px-2.5 py-1.5 rounded-lg font-semibold transition flex items-center space-x-1 shadow" title="Configurar URL de Google Apps Script">
+                    <i class="fa-solid fa-gear"></i> <span class="hidden sm:inline">Configurar Web App</span>
                 </button>
-                <button onclick="handleLogout()" class="bg-rose-700 hover:bg-rose-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1 shadow">
-                    <i class="fa-solid fa-right-from-bracket"></i> <span>Cerrar Sesión</span>
+
+                <!-- Botón Cerrar Sesión -->
+                <button onclick="handleLogout()" class="bg-rose-700 hover:bg-rose-600 text-white px-3 py-1.5 rounded-lg font-semibold transition flex items-center space-x-1 shadow">
+                    <i class="fa-solid fa-right-from-bracket"></i> <span>Salir</span>
                 </button>
             </div>
         </div>
@@ -100,14 +160,18 @@
 
     <!-- Navigation Tabs -->
     <nav class="bg-white shadow border-b border-slate-200 overflow-x-auto">
-        <div class="max-w-7xl mx-auto px-4 flex space-x-6 min-w-max">
+        <div class="max-w-7xl mx-auto px-4 flex space-x-4 md:space-x-6 min-w-max">
             <button onclick="switchTab('kpiTab')" id="btnKpiTab" class="py-4 px-2 border-b-2 border-brand-600 text-brand-700 font-bold text-sm flex items-center space-x-2 transition">
                 <i class="fa-solid fa-chart-pie text-brand-600"></i>
-                <span>KPIs Sucursales</span>
+                <span id="labelNavKpis">KPIs Sucursales</span>
+            </button>
+            <button onclick="switchTab('calendarioTab')" id="btnCalendarioTab" class="py-4 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-semibold text-sm flex items-center space-x-2 transition">
+                <i class="fa-solid fa-calendar-days text-slate-400"></i>
+                <span>Calendario de Cortes</span>
             </button>
             <button onclick="switchTab('ventasTab')" id="btnVentasTab" class="py-4 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-semibold text-sm flex items-center space-x-2 transition">
                 <i class="fa-solid fa-chart-line text-slate-400"></i>
-                <span>Ventas Semanales / Mensuales</span>
+                <span id="labelNavVentas">Ventas Semanales / Mensuales</span>
             </button>
             <button onclick="switchTab('inputTab')" id="btnInputTab" class="py-4 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-semibold text-sm flex items-center space-x-2 transition">
                 <i class="fa-solid fa-file-invoice-dollar text-slate-400"></i>
@@ -125,14 +189,14 @@
     </nav>
 
     <!-- Main Content Container -->
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8">
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6 md:py-8">
 
         <!-- ================= TAB 1: KPI SUCURSALES ================= -->
         <div id="kpiTab" class="space-y-6">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200 gap-4">
                 <div>
-                    <h2 class="text-xl font-bold text-slate-900">Resumen Ejecutivo por Sucursal</h2>
-                    <p class="text-sm text-slate-500">Visualización en tiempo real de ingresos, egresos y neto (Ingresos - Egresos) de la base de datos.</p>
+                    <h2 id="kpiTituloPrincipal" class="text-xl font-bold text-slate-900">Resumen Ejecutivo por Sucursal</h2>
+                    <p id="kpiSubtituloPrincipal" class="text-sm text-slate-500">Visualización en tiempo real de ingresos, egresos, neto y último retiro registrado en el corte de caja.</p>
                 </div>
                 <div class="flex items-center space-x-3">
                     <div>
@@ -145,19 +209,130 @@
                 </div>
             </div>
 
+            <!-- Resumen Consolidado General (Solo para Administrador) -->
+            <div id="kpiAdminSummary" class="grid grid-cols-1 md:grid-cols-4 gap-4 hidden">
+                <div class="bg-slate-900 text-white p-4 rounded-xl shadow border border-slate-800">
+                    <span class="block text-xs text-slate-400 font-semibold uppercase">Total Ingresos Grupo</span>
+                    <span id="adminTotalIngresos" class="text-xl font-extrabold text-emerald-400">$0.00</span>
+                </div>
+                <div class="bg-slate-900 text-white p-4 rounded-xl shadow border border-slate-800">
+                    <span class="block text-xs text-slate-400 font-semibold uppercase">Total Egresos Grupo</span>
+                    <span id="adminTotalEgresos" class="text-xl font-extrabold text-rose-400">$0.00</span>
+                </div>
+                <div class="bg-slate-900 text-white p-4 rounded-xl shadow border border-slate-800">
+                    <span class="block text-xs text-slate-400 font-semibold uppercase">Neto Consolidado</span>
+                    <span id="adminTotalNeto" class="text-xl font-extrabold text-emerald-300">$0.00</span>
+                </div>
+                <div class="bg-amber-950 text-white p-4 rounded-xl shadow border border-amber-900">
+                    <span class="block text-xs text-amber-300 font-semibold uppercase">Total Últimos Retiros</span>
+                    <span id="adminTotalUltimoRetiro" class="text-xl font-extrabold text-amber-300">$0.00</span>
+                </div>
+            </div>
+
             <!-- KPI Cards Grid -->
             <div id="kpiContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Sucursales se cargan dinámicamente aquí -->
+                <!-- Se cargan dinámicamente según permisos -->
             </div>
         </div>
 
-        <!-- ================= TAB NUEVA: VENTAS SEMANALES / MENSUALES ================= -->
+        <!-- ================= TAB NUEVA: CALENDARIO DE CORTES (INGRESADOS VS PENDIENTES) ================= -->
+        <div id="calendarioTab" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 flex items-center">
+                            <i class="fa-solid fa-calendar-days text-brand-600 mr-2"></i> Calendario y Control de Ingreso de Cortes
+                        </h2>
+                        <p class="text-sm text-slate-500">Monitorea qué cortes diarios han sido ingresados al sistema y cuáles faltan por ingresar según la fecha seleccionada.</p>
+                    </div>
+                </div>
+
+                <!-- Filtros del Calendario -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Seleccionar Mes y Año:</label>
+                        <input type="month" id="calMesInput" onchange="cargarCalendarioCortes()" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Sucursal a Evaluar:</label>
+                        <select id="calSucursalSelect" onchange="cargarCalendarioCortes()" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white font-medium">
+                            <option value="TODAS">-- Todas las Sucursales (Consolidado) --</option>
+                            <option value="FG MATRIZ">FG MATRIZ</option>
+                            <option value="FG HIERROGAR">FG HIERROGAR</option>
+                            <option value="FG VIÑEDO">FG VIÑEDO</option>
+                            <option value="FG COMALAPA">FG COMALAPA</option>
+                            <option value="CONSTRUGAR AUTOPISTA">CONSTRUGAR AUTOPISTA</option>
+                            <option value="CONSTRUGAR AGUILA">CONSTRUGAR AGUILA</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="cargarCalendarioCortes()" class="w-full bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shadow flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-arrows-rotate"></i> <span>Actualizar Calendario</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Métricas de Cumplimiento del Mes -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <span class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Días Evaluados</span>
+                    <span id="calDiasEvaluadosLbl" class="text-2xl font-bold text-slate-800">0</span>
+                    <span class="block text-[11px] text-slate-400 mt-1">Días hasta la fecha actual</span>
+                </div>
+                <div class="bg-emerald-50 p-5 rounded-xl shadow-sm border border-emerald-200">
+                    <span class="block text-xs font-semibold text-emerald-800 uppercase tracking-wider">Cortes Ingresados</span>
+                    <span id="calCortesIngresadosLbl" class="text-2xl font-extrabold text-emerald-700">0</span>
+                    <span class="block text-[11px] text-emerald-600 mt-1">Registros guardados en sistema</span>
+                </div>
+                <div class="bg-rose-50 p-5 rounded-xl shadow-sm border border-rose-200">
+                    <span class="block text-xs font-semibold text-rose-800 uppercase tracking-wider">Cortes Faltantes</span>
+                    <span id="calCortesFaltantesLbl" class="text-2xl font-extrabold text-rose-700">0</span>
+                    <span class="block text-[11px] text-rose-600 mt-1">Días pendientes de registro</span>
+                </div>
+                <div class="bg-slate-900 text-white p-5 rounded-xl shadow-sm border border-slate-800">
+                    <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">% de Cumplimiento</span>
+                    <span id="calPorcentajeLbl" class="text-2xl font-extrabold text-emerald-400">0%</span>
+                    <span class="block text-[11px] text-slate-400 mt-1">Tasa de entrega de cortes</span>
+                </div>
+            </div>
+
+            <!-- Contenedor del Calendario Visual -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-3 gap-2">
+                    <h3 id="calTituloMes" class="text-base font-bold text-slate-900">Mes: Cargando...</h3>
+                    <div class="flex items-center space-x-4 text-xs font-semibold">
+                        <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded bg-emerald-500 inline-block"></span> <span>Ingresado</span></span>
+                        <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded bg-rose-500 inline-block"></span> <span>Faltante / Pendiente</span></span>
+                        <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded bg-amber-400 inline-block"></span> <span>Incompleto (Admin)</span></span>
+                    </div>
+                </div>
+
+                <!-- Cabecera Días Semana -->
+                <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-slate-600 py-2 border-b border-slate-100">
+                    <span>Lunes</span>
+                    <span>Martes</span>
+                    <span>Miércoles</span>
+                    <span>Jueves</span>
+                    <span>Viernes</span>
+                    <span>Sábado</span>
+                    <span>Domingo</span>
+                </div>
+
+                <!-- Celdas del Calendario Dinámicas -->
+                <div id="calGridDias" class="grid grid-cols-7 gap-2">
+                    <!-- Se generan con JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 2: VENTAS SEMANALES / MENSUALES ================= -->
         <div id="ventasTab" class="hidden space-y-6">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <h2 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-chart-line text-brand-600 mr-2"></i> Reporte de Ventas Semanales / Mensuales / Anuales</h2>
-                        <p class="text-sm text-slate-500">Seleccione el tipo de período (Semana, Mes o Año) y la fecha de referencia para consultar las ventas consolidadas por sucursal.</p>
+                        <h2 id="ventasTituloPrincipal" class="text-xl font-bold text-slate-900"><i class="fa-solid fa-chart-line text-brand-600 mr-2"></i> Reporte de Ventas Semanales / Mensuales / Anuales</h2>
+                        <p id="ventasSubtituloPrincipal" class="text-sm text-slate-500">Seleccione el tipo de período (Semana, Mes o Año) y la fecha de referencia para consultar las ventas consolidadas.</p>
                     </div>
                 </div>
 
@@ -199,7 +374,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-slate-900 text-white p-6 rounded-xl shadow-lg flex justify-between items-center">
                     <div>
-                        <span class="block text-xs text-slate-400 font-semibold uppercase tracking-wider">Total Vendido en el Período</span>
+                        <span id="ventasTituloTotalPeriodo" class="block text-xs text-slate-400 font-semibold uppercase tracking-wider">Total Vendido en el Período</span>
                         <span id="ventasTotalesPeriodoLbl" class="text-2xl font-extrabold text-emerald-400">$0.00</span>
                     </div>
                     <div class="bg-slate-800 p-3 rounded-xl text-emerald-400 text-xl font-bold">
@@ -223,20 +398,20 @@
             </div>
         </div>
 
-        <!-- ================= TAB 2: INGRESO DE CORTE DIARIO ================= -->
+        <!-- ================= TAB 3: INGRESO DE CORTE DIARIO ================= -->
         <div id="inputTab" class="hidden space-y-6">
             <form id="corteForm" onsubmit="submitCorte(event)" onkeydown="return event.key != 'Enter';" class="bg-white shadow-sm rounded-xl border border-slate-200 p-6 md:p-8 space-y-8">
                 
                 <!-- Encabezado del Formulario -->
                 <div class="border-b border-slate-200 pb-6">
-                    <div class="flex justify-between items-center mb-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                         <h2 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-cash-register text-brand-600 mr-2"></i> Reporte de Ingresos y Egresos de Caja</h2>
-                        <span class="text-xs bg-brand-50 text-brand-700 px-3 py-1 rounded-full font-semibold border border-brand-200">Creación Automática de Hoja Diaria en Google Sheets</span>
+                        <span class="text-xs bg-brand-50 text-brand-700 px-3 py-1 rounded-full font-semibold border border-brand-200">Sincronización Automática con Google Sheets</span>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                         <div>
                             <label class="block text-sm font-bold text-slate-700 mb-1">SUCURSAL <span class="text-red-500">*</span></label>
-                            <select id="sucursal" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white">
+                            <select id="sucursal" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white font-medium">
                                 <option value="">-- Seleccione Sucursal --</option>
                                 <option value="FG MATRIZ">FG MATRIZ</option>
                                 <option value="FG HIERROGAR">FG HIERROGAR</option>
@@ -245,10 +420,11 @@
                                 <option value="CONSTRUGAR AUTOPISTA">CONSTRUGAR AUTOPISTA</option>
                                 <option value="CONSTRUGAR AGUILA">CONSTRUGAR AGUILA</option>
                             </select>
+                            <p id="sucursalBloqueadaAviso" class="text-[11px] text-slate-500 mt-1 hidden"><i class="fa-solid fa-lock text-brand-600 mr-1"></i> Sucursal asignada por inicio de sesión.</p>
                         </div>
                         <div>
                             <label class="block text-sm font-bold text-slate-700 mb-1">FECHA <span class="text-red-500">*</span></label>
-                            <input type="date" id="fecha" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white">
+                            <input type="date" id="fecha" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white font-medium">
                         </div>
                     </div>
                 </div>
@@ -258,7 +434,7 @@
                     <label class="block text-sm font-bold text-slate-700 mb-2">SALDO INICIAL</label>
                     <div class="relative max-w-xs">
                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 font-bold">$</span>
-                        <input type="number" step="0.01" id="saldoInicial" placeholder="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <input type="number" step="0.01" id="saldoInicial" placeholder="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none font-semibold">
                     </div>
                 </div>
 
@@ -271,28 +447,28 @@
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Ingresos por Venta Consumidor Final</label>
                             <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">$</span>
                                 <input type="number" step="0.01" id="ventaConsumidor" placeholder="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Ingresos por Venta Contribuyentes</label>
                             <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">$</span>
                                 <input type="number" step="0.01" id="ventaContribuyentes" placeholder="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Ingresos por Cuentas por Cobrar</label>
                             <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">$</span>
                                 <input type="number" step="0.01" id="ingresosCxc" placeholder="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Otros Ingresos</label>
                             <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">$</span>
                                 <input type="number" step="0.01" id="otrosIngresos" placeholder="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                             </div>
                         </div>
@@ -312,26 +488,25 @@
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Cobros por Tarjetas</label>
                             <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">$</span>
                                 <input type="number" step="0.01" id="cobrosTarjetas" placeholder="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Cobros por Transferencias o Depósitos</label>
                             <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">$</span>
                                 <input type="number" step="0.01" id="cobrosTransferencias" placeholder="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Retiros Parciales</label>
                             <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">$</span>
                                 <input type="number" step="0.01" id="retirosParciales" placeholder="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                             </div>
                         </div>
                     </div>
-                    <!-- NUEVO: Mostrar total de Egresos base (Tarjetas, Transf, Retiros) -->
                     <div class="flex justify-end bg-rose-50 p-3 rounded-lg border border-rose-200 mt-4">
                         <span class="text-sm font-bold text-rose-900 mr-4">TOTAL EGRESOS (Tarjetas/Transf/Retiros):</span>
                         <span id="totalEgresosBaseLbl" class="text-lg font-extrabold text-rose-700">$0.00</span>
@@ -343,14 +518,14 @@
                     <div class="flex justify-between items-center">
                         <div>
                             <h4 class="text-sm font-bold text-slate-800"><i class="fa-solid fa-users mr-1 text-brand-600"></i> CUENTAS POR COBRAR CLIENTES</h4>
-                            <p class="text-xs text-slate-500">Nombre del cliente y número de factura</p>
+                            <p class="text-xs text-slate-500">Nombre del cliente, número de factura y monto</p>
                         </div>
                         <button type="button" onclick="addCxcRow('cxcContainer')" class="bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1 shadow">
                             <i class="fa-solid fa-plus"></i> <span>Agregar Cliente</span>
                         </button>
                     </div>
                     <div id="cxcContainer" class="space-y-2">
-                        <!-- Filas dinámicas aquí -->
+                        <!-- Filas dinámicas -->
                     </div>
                     <div class="flex justify-end pt-2 border-t border-slate-200">
                         <span class="text-xs font-bold text-slate-700 mr-4">TOTAL CUENTAS POR COBRAR:</span>
@@ -363,14 +538,14 @@
                     <div class="flex justify-between items-center">
                         <div>
                             <h4 class="text-sm font-bold text-slate-800"><i class="fa-solid fa-receipt mr-1 text-rose-600"></i> EGRESOS POR COMPRAS O PAGOS EN EFECTIVO</h4>
-                            <p class="text-xs text-slate-500">Nombre del proveedor y número de factura</p>
+                            <p class="text-xs text-slate-500">Nombre del proveedor, número de factura y monto</p>
                         </div>
                         <button type="button" onclick="addEgresoRow('egresoContainer')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1 shadow">
                             <i class="fa-solid fa-plus"></i> <span>Agregar Egreso</span>
                         </button>
                     </div>
                     <div id="egresoContainer" class="space-y-2">
-                        <!-- Filas dinámicas aquí -->
+                        <!-- Filas dinámicas -->
                     </div>
                     <div class="flex justify-end pt-2 border-t border-slate-200">
                         <span class="text-xs font-bold text-slate-700 mr-4">TOTAL EGRESOS EFECTIVO:</span>
@@ -391,10 +566,10 @@
                             <span id="ingresosMenosEgresosLbl" class="text-xl font-bold text-emerald-400">$0.00</span>
                         </div>
                         <div>
-                            <label class="block text-xs text-slate-300 mb-1">ÚLTIMO RETIRO</label>
+                            <label class="block text-xs text-amber-300 font-bold mb-1"><i class="fa-solid fa-hand-holding-dollar mr-1"></i> ÚLTIMO RETIRO</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
-                                <input type="number" step="0.01" id="ultimoRetiro" placeholder="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <input type="number" step="0.01" id="ultimoRetiro" placeholder="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none font-bold text-amber-300">
                             </div>
                         </div>
                     </div>
@@ -453,16 +628,20 @@
             </form>
         </div>
 
-        <!-- ================= TAB 3: BUSCAR / VISUALIZAR CORTES ================= -->
+        <!-- ================= TAB 4: BUSCAR / VISUALIZAR CORTES (COMO EN HOJA + DESCARGAS) ================= -->
         <div id="searchTab" class="hidden space-y-6">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
-                <h2 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-magnifying-glass text-brand-600 mr-2"></i> Búsqueda y Visualización de Cortes de Caja</h2>
-                <p class="text-sm text-slate-500">Filtra por sucursal y rango de fechas para consultar registros detallados.</p>
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-magnifying-glass text-brand-600 mr-2"></i> Búsqueda y Visualización de Cortes de Caja</h2>
+                        <p class="text-sm text-slate-500">Consulte los cortes registrados, visualícelos en formato de hoja contable y descargue reportes en PDF o Excel.</p>
+                    </div>
+                </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Sucursal:</label>
-                        <select id="searchSucursal" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                        <select id="searchSucursal" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white font-medium">
                             <option value="">-- Todas las Sucursales --</option>
                             <option value="FG MATRIZ">FG MATRIZ</option>
                             <option value="FG HIERROGAR">FG HIERROGAR</option>
@@ -473,14 +652,30 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha:</label>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha (Opcional para ver histórico):</label>
                         <input type="date" id="searchFecha" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
                     </div>
                     <div class="flex items-end">
                         <button onclick="buscarCortes()" class="w-full bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shadow flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-filter"></i> <span>Aplicar Filtros</span>
+                            <i class="fa-solid fa-filter"></i> <span>Buscar Registros</span>
                         </button>
                     </div>
+                </div>
+            </div>
+
+            <!-- Barra de Acciones Globales de Exportación -->
+            <div id="searchBulkActions" class="flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200 gap-3 hidden">
+                <div class="text-xs font-bold text-slate-700">
+                    <i class="fa-solid fa-list-check text-brand-600 mr-1.5"></i>
+                    Resultados encontrados: <span id="searchResultCount" class="text-brand-700 font-extrabold text-sm">0</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="descargarResultadosExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition shadow flex items-center space-x-1.5">
+                        <i class="fa-solid fa-file-excel"></i> <span>Exportar Lista a Excel</span>
+                    </button>
+                    <button onclick="descargarResultadosPDF()" class="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition shadow flex items-center space-x-1.5">
+                        <i class="fa-solid fa-file-pdf"></i> <span>Exportar Lista a PDF</span>
+                    </button>
                 </div>
             </div>
 
@@ -488,7 +683,7 @@
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-sm">
-                        <thead class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                        <thead class="bg-slate-100 text-slate-700 border-b border-slate-200 text-xs uppercase tracking-wider">
                             <tr>
                                 <th class="p-3 font-bold">Fecha</th>
                                 <th class="p-3 font-bold">Sucursal</th>
@@ -496,12 +691,16 @@
                                 <th class="p-3 font-bold text-right">Ingresos</th>
                                 <th class="p-3 font-bold text-right">Egresos</th>
                                 <th class="p-3 font-bold text-right">Neto</th>
+                                <th class="p-3 font-bold text-right text-amber-700">Último Retiro</th>
                                 <th class="p-3 font-bold text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tablaResultadosCortes" class="divide-y divide-slate-200">
                             <tr>
-                                <td colspan="7" class="p-6 text-center text-slate-400">Utilice los filtros y presione "Aplicar Filtros" para consultar registros.</td>
+                                <td colspan="8" class="p-8 text-center text-slate-400">
+                                    <i class="fa-solid fa-folder-open text-3xl mb-2 block text-slate-300"></i>
+                                    Utilice los filtros arriba y presione "Buscar Registros" para consultar los cortes.
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -509,16 +708,16 @@
             </div>
         </div>
 
-        <!-- ================= TAB 4: EDITAR CORTE DE CAJA ================= -->
+        <!-- ================= TAB 5: EDITAR CORTE DE CAJA ================= -->
         <div id="editTab" class="hidden space-y-6">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
                 <h2 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-pen-to-square text-brand-600 mr-2"></i> Edición de Corte de Caja</h2>
-                <p class="text-sm text-slate-500">Seleccione la sucursal y la fecha para cargar un corte existente y modificar sus valores.</p>
+                <p class="text-sm text-slate-500">Seleccione la sucursal y la fecha para cargar un corte existente y modificar sus valores en Google Sheets.</p>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Sucursal a Editar:</label>
-                        <select id="editLoadSucursal" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white" required>
+                        <select id="editLoadSucursal" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white font-medium" required>
                             <option value="">-- Seleccione Sucursal --</option>
                             <option value="FG MATRIZ">FG MATRIZ</option>
                             <option value="FG HIERROGAR">FG HIERROGAR</option>
@@ -552,7 +751,7 @@
                     <label class="block text-sm font-bold text-slate-700 mb-2">SALDO INICIAL</label>
                     <div class="relative max-w-xs">
                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 font-bold">$</span>
-                        <input type="number" step="0.01" id="editSaldoInicial" placeholder="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <input type="number" step="0.01" id="editSaldoInicial" placeholder="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none font-semibold">
                     </div>
                 </div>
 
@@ -565,28 +764,28 @@
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Ingresos por Venta Consumidor Final</label>
                             <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">$</span>
                                 <input type="number" step="0.01" id="editVentaConsumidor" placeholder="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Ingresos por Venta Contribuyentes</label>
                             <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">$</span>
                                 <input type="number" step="0.01" id="editVentaContribuyentes" placeholder="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Ingresos por Cuentas por Cobrar</label>
                             <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">$</span>
                                 <input type="number" step="0.01" id="editIngresosCxc" placeholder="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Otros Ingresos</label>
                             <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">$</span>
                                 <input type="number" step="0.01" id="editOtrosIngresos" placeholder="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                             </div>
                         </div>
@@ -606,26 +805,25 @@
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Cobros por Tarjetas</label>
                             <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">$</span>
                                 <input type="number" step="0.01" id="editCobrosTarjetas" placeholder="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Cobros por Transferencias o Depósitos</label>
                             <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">$</span>
                                 <input type="number" step="0.01" id="editCobrosTransferencias" placeholder="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Retiros Parciales</label>
                             <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">$</span>
                                 <input type="number" step="0.01" id="editRetirosParciales" placeholder="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                             </div>
                         </div>
                     </div>
-                    <!-- NUEVO: Mostrar total de Egresos base (Tarjetas, Transf, Retiros) en edición -->
                     <div class="flex justify-end bg-rose-50 p-3 rounded-lg border border-rose-200 mt-4">
                         <span class="text-sm font-bold text-rose-900 mr-4">TOTAL EGRESOS (Tarjetas/Transf/Retiros):</span>
                         <span id="editTotalEgresosBaseLbl" class="text-lg font-extrabold text-rose-700">$0.00</span>
@@ -635,9 +833,7 @@
                 <!-- SECCIÓN DINÁMICA EDIT: CUENTAS POR COBRAR -->
                 <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                     <div class="flex justify-between items-center">
-                        <div>
-                            <h4 class="text-sm font-bold text-slate-800"><i class="fa-solid fa-users mr-1 text-brand-600"></i> CUENTAS POR COBRAR CLIENTES</h4>
-                        </div>
+                        <h4 class="text-sm font-bold text-slate-800"><i class="fa-solid fa-users mr-1 text-brand-600"></i> CUENTAS POR COBRAR CLIENTES</h4>
                         <button type="button" onclick="addCxcRow('editCxcContainer')" class="bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1 shadow">
                             <i class="fa-solid fa-plus"></i> <span>Agregar Cliente</span>
                         </button>
@@ -652,9 +848,7 @@
                 <!-- SECCIÓN DINÁMICA EDIT: EGRESOS EFECTIVO -->
                 <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                     <div class="flex justify-between items-center">
-                        <div>
-                            <h4 class="text-sm font-bold text-slate-800"><i class="fa-solid fa-receipt mr-1 text-rose-600"></i> EGRESOS POR COMPRAS O PAGOS EN EFECTIVO</h4>
-                        </div>
+                        <h4 class="text-sm font-bold text-slate-800"><i class="fa-solid fa-receipt mr-1 text-rose-600"></i> EGRESOS POR COMPRAS O PAGOS EN EFECTIVO</h4>
                         <button type="button" onclick="addEgresoRow('editEgresoContainer')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1 shadow">
                             <i class="fa-solid fa-plus"></i> <span>Agregar Egreso</span>
                         </button>
@@ -679,10 +873,10 @@
                             <span id="editIngresosMenosEgresosLbl" class="text-xl font-bold text-emerald-400">$0.00</span>
                         </div>
                         <div>
-                            <label class="block text-xs text-slate-300 mb-1">ÚLTIMO RETIRO</label>
+                            <label class="block text-xs text-amber-300 font-bold mb-1"><i class="fa-solid fa-hand-holding-dollar mr-1"></i> ÚLTIMO RETIRO</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
-                                <input type="number" step="0.01" id="editUltimoRetiro" placeholder="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <input type="number" step="0.01" id="editUltimoRetiro" placeholder="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none font-bold text-amber-300">
                             </div>
                         </div>
                     </div>
@@ -742,7 +936,264 @@
 
     </main>
 
-    <!-- Modal Configuración Google Apps Script URL -->
+    <!-- ================= MODAL: HOJA DE CORTE COMPLETA (VISTA HOJA OFICIAL) ================= -->
+    <div id="hojaCorteModal" class="fixed inset-0 bg-slate-900 bg-opacity-75 z-50 flex items-center justify-center p-2 sm:p-4 hidden overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-4xl w-full p-4 sm:p-6 space-y-4 shadow-2xl max-h-[92vh] flex flex-col my-auto">
+            
+            <!-- Barra superior del modal (Botones de acción de descarga e impresión) -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-3 gap-2 no-imprimir">
+                <div class="flex items-center space-x-2">
+                    <div class="bg-brand-900 text-white p-2 rounded-lg text-base">
+                        <i class="fa-solid fa-file-invoice"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-bold text-slate-900">Hoja Detallada de Corte de Caja</h3>
+                        <p class="text-xs text-slate-500">Visualización completa de todos los datos ingresados.</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="descargarHojaActualPDF()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow flex items-center space-x-1">
+                        <i class="fa-solid fa-file-pdf"></i> <span>Descargar PDF</span>
+                    </button>
+                    <button onclick="descargarHojaActualExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow flex items-center space-x-1">
+                        <i class="fa-solid fa-file-excel"></i> <span>Descargar Excel</span>
+                    </button>
+                    <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow flex items-center space-x-1">
+                        <i class="fa-solid fa-print"></i> <span>Imprimir</span>
+                    </button>
+                    <button onclick="cerrarHojaCorteModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+                        <i class="fa-solid fa-xmark"></i> <span>Cerrar</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contenedor con Scroll de la Hoja Oficial Imprimible -->
+            <div class="overflow-y-auto flex-grow p-1">
+                <div id="hojaCorteDocumento" class="hoja-papel p-6 sm:p-8 rounded-xl space-y-6 text-slate-800 text-sm">
+                    
+                    <!-- Membrete de la Empresa -->
+                    <div class="border-b-2 border-brand-900 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-brand-900 text-white p-2.5 rounded-xl text-xl font-bold">
+                                <i class="fa-solid fa-cash-register"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-black text-brand-900 tracking-wide">GRUPO FERROGAR & CONSTRUGAR</h2>
+                                <p class="text-xs font-semibold text-slate-600 uppercase tracking-wider">Reporte Oficial de Corte de Caja Diario</p>
+                            </div>
+                        </div>
+                        <div class="text-left sm:text-right text-xs">
+                            <div class="font-bold text-slate-800">Fecha de Corte: <span id="docFecha" class="text-brand-900 font-extrabold text-sm underline">--</span></div>
+                            <div class="font-semibold text-slate-600">Sucursal: <span id="docSucursal" class="font-bold text-slate-900 uppercase">--</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Datos Generales y Responsables -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+                        <div class="space-y-1">
+                            <div><strong class="text-slate-600">Cajera(o):</strong> <span id="docNombreCajera" class="font-bold text-slate-900">--</span></div>
+                            <div><strong class="text-slate-600">Encargada(o):</strong> <span id="docNombreEncargada" class="font-bold text-slate-900">--</span></div>
+                        </div>
+                        <div class="space-y-1">
+                            <div><strong class="text-slate-600">Correlativo CF:</strong> Del <span id="docCfDel" class="font-bold text-slate-900">--</span> Al <span id="docCfAl" class="font-bold text-slate-900">--</span></div>
+                            <div><strong class="text-slate-600">Correlativo CCF:</strong> Del <span id="docCcfDel" class="font-bold text-slate-900">--</span> Al <span id="docCcfAl" class="font-bold text-slate-900">--</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Saldo Inicial -->
+                    <div class="flex justify-between items-center bg-slate-100 px-4 py-2.5 rounded-lg border border-slate-300">
+                        <span class="font-bold text-slate-700 text-xs uppercase tracking-wider">SALDO INICIAL DE CAJA:</span>
+                        <span id="docSaldoInicial" class="text-base font-extrabold text-slate-900">$0.00</span>
+                    </div>
+
+                    <!-- Tablas de Ingresos y Egresos en Dos Columnas -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <!-- Columna Ingresos -->
+                        <div class="space-y-3">
+                            <div class="bg-emerald-800 text-white px-3 py-1.5 rounded-lg font-bold text-xs uppercase flex justify-between">
+                                <span>Detalle de Ingresos</span>
+                                <i class="fa-solid fa-arrow-trend-up"></i>
+                            </div>
+                            <table class="w-full text-xs">
+                                <tbody class="divide-y divide-slate-200">
+                                    <tr>
+                                        <td class="py-1.5 text-slate-600">Venta Consumidor Final</td>
+                                        <td id="docVentaConsumidor" class="py-1.5 text-right font-semibold text-slate-900">$0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5 text-slate-600">Venta Contribuyentes</td>
+                                        <td id="docVentaContribuyentes" class="py-1.5 text-right font-semibold text-slate-900">$0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5 text-slate-600">Ingresos Cuentas por Cobrar</td>
+                                        <td id="docIngresosCxc" class="py-1.5 text-right font-semibold text-slate-900">$0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5 text-slate-600">Otros Ingresos</td>
+                                        <td id="docOtrosIngresos" class="py-1.5 text-right font-semibold text-slate-900">$0.00</td>
+                                    </tr>
+                                    <tr class="bg-emerald-50 font-extrabold text-emerald-900 text-sm">
+                                        <td class="py-2 px-1">TOTAL INGRESOS</td>
+                                        <td id="docTotalIngresos" class="py-2 px-1 text-right">$0.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Columna Egresos Base -->
+                        <div class="space-y-3">
+                            <div class="bg-rose-800 text-white px-3 py-1.5 rounded-lg font-bold text-xs uppercase flex justify-between">
+                                <span>Detalle Egresos Base</span>
+                                <i class="fa-solid fa-arrow-trend-down"></i>
+                            </div>
+                            <table class="w-full text-xs">
+                                <tbody class="divide-y divide-slate-200">
+                                    <tr>
+                                        <td class="py-1.5 text-slate-600">Cobros por Tarjetas</td>
+                                        <td id="docCobrosTarjetas" class="py-1.5 text-right font-semibold text-slate-900">$0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5 text-slate-600">Cobros por Transferencias/Depósitos</td>
+                                        <td id="docCobrosTransferencias" class="py-1.5 text-right font-semibold text-slate-900">$0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5 text-slate-600">Retiros Parciales</td>
+                                        <td id="docRetirosParciales" class="py-1.5 text-right font-semibold text-slate-900">$0.00</td>
+                                    </tr>
+                                    <tr class="bg-rose-50 font-extrabold text-rose-900 text-sm">
+                                        <td class="py-2 px-1">SUBTOTAL EGRESOS BASE</td>
+                                        <td id="docTotalEgresosBase" class="py-2 px-1 text-right">$0.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Detalle Cuentas por Cobrar Clientes -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center border-b pb-1">
+                            <h4 class="font-bold text-xs text-slate-800 uppercase flex items-center">
+                                <i class="fa-solid fa-users text-brand-600 mr-1.5"></i> Cuentas por Cobrar Clientes
+                            </h4>
+                            <span id="docTotalCxcHeader" class="text-xs font-extrabold text-slate-900">Total: $0.00</span>
+                        </div>
+                        <table class="w-full text-left text-xs border border-slate-200 rounded-lg overflow-hidden">
+                            <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                                <tr>
+                                    <th class="p-2">Cliente</th>
+                                    <th class="p-2">N° Factura</th>
+                                    <th class="p-2 text-right">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="docTablaCxc" class="divide-y divide-slate-100">
+                                <tr><td colspan="3" class="p-2 text-center text-slate-400">Sin cuentas por cobrar registradas.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Detalle Egresos por Compras / Efectivo -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center border-b pb-1">
+                            <h4 class="font-bold text-xs text-slate-800 uppercase flex items-center">
+                                <i class="fa-solid fa-receipt text-rose-600 mr-1.5"></i> Egresos por Compras / Pagos en Efectivo
+                            </h4>
+                            <span id="docTotalEgresosEfectivoHeader" class="text-xs font-extrabold text-rose-700">Total: $0.00</span>
+                        </div>
+                        <table class="w-full text-left text-xs border border-slate-200 rounded-lg overflow-hidden">
+                            <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                                <tr>
+                                    <th class="p-2">Proveedor</th>
+                                    <th class="p-2">N° Factura</th>
+                                    <th class="p-2 text-right">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="docTablaEgresos" class="divide-y divide-slate-100">
+                                <tr><td colspan="3" class="p-2 text-center text-slate-400">Sin egresos en efectivo registrados.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Cuadro de Cuadre y Resumen General -->
+                    <div class="bg-slate-900 text-white p-5 rounded-xl space-y-4">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                            <h4 class="font-bold text-xs text-emerald-400 uppercase tracking-wider">CUADRE FINAL DE CAJA</h4>
+                            <span class="text-[11px] text-slate-400">Consolidado general</span>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                            <div class="bg-slate-800 p-2.5 rounded-lg">
+                                <span class="block text-[11px] text-slate-400 uppercase">Total Ingresos</span>
+                                <span id="docCuadreIngresos" class="text-base font-extrabold text-emerald-400">$0.00</span>
+                            </div>
+                            <div class="bg-slate-800 p-2.5 rounded-lg">
+                                <span class="block text-[11px] text-slate-400 uppercase">Total Egresos</span>
+                                <span id="docCuadreEgresos" class="text-base font-extrabold text-rose-400">$0.00</span>
+                            </div>
+                            <div class="bg-slate-800 p-2.5 rounded-lg">
+                                <span class="block text-[11px] text-slate-400 uppercase">Neto (Ing. - Egr.)</span>
+                                <span id="docCuadreNeto" class="text-base font-extrabold text-emerald-300">$0.00</span>
+                            </div>
+                            <div class="bg-amber-950 p-2.5 rounded-lg border border-amber-800">
+                                <span class="block text-[11px] text-amber-300 uppercase font-bold">Último Retiro</span>
+                                <span id="docCuadreUltimoRetiro" class="text-base font-extrabold text-amber-300">$0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Sobrante / Faltante -->
+                        <div class="grid grid-cols-2 gap-4 pt-2 border-t border-slate-800">
+                            <div class="flex justify-between items-center bg-slate-800 px-3 py-2 rounded-lg text-xs">
+                                <span class="text-slate-300 font-bold">SOBRANTE:</span>
+                                <span id="docCuadreSobrante" class="text-sm font-extrabold text-emerald-400">$0.00</span>
+                            </div>
+                            <div class="flex justify-between items-center bg-slate-800 px-3 py-2 rounded-lg text-xs">
+                                <span class="text-slate-300 font-bold">FALTANTE:</span>
+                                <span id="docCuadreFaltante" class="text-sm font-extrabold text-rose-400">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Firmas de Responsabilidad -->
+                    <div class="grid grid-cols-2 gap-8 pt-8 text-center text-xs">
+                        <div class="space-y-2">
+                            <div class="border-t border-slate-400 pt-2 font-bold text-slate-800" id="docFirmaCajeraLabel">Firma Cajera(o)</div>
+                            <p class="text-[11px] text-slate-500">Responsable de Caja</p>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="border-t border-slate-400 pt-2 font-bold text-slate-800" id="docFirmaEncargadaLabel">Firma Encargada(o)</div>
+                            <p class="text-[11px] text-slate-500">Revisado y Autorizado</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ================= MODAL: DETALLE DEL DÍA EN EL CALENDARIO ================= -->
+    <div id="calDetalleModal" class="fixed inset-0 bg-slate-900 bg-opacity-70 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-3">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900 flex items-center">
+                        <i class="fa-solid fa-calendar-check text-brand-600 mr-2"></i> Estatus de Cortes del Día
+                    </h3>
+                    <p id="calModalFechaTexto" class="text-xs text-slate-500 font-medium">Fecha: --</p>
+                </div>
+                <button onclick="cerrarCalDetalleModal()" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div id="calModalListaSucursales" class="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                <!-- Se listan dinámicamente las sucursales -->
+            </div>
+
+            <div class="flex justify-end pt-3 border-t">
+                <button onclick="cerrarCalDetalleModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-lg text-xs font-bold transition">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: CONFIGURACIÓN GOOGLE APPS SCRIPT URL ================= -->
     <div id="configModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
             <div class="flex justify-between items-center border-b pb-3">
@@ -750,7 +1201,7 @@
                 <button onclick="closeConfigModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <p class="text-xs text-slate-600">
-                Pega aquí la URL de implementación (Web App URL) de tu Google Apps Script para conectar este HTML con Google Sheets y permitir la creación automática de hojas diarias y consulta de KPIs.
+                Pega aquí la URL de implementación (Web App URL) de tu Google Apps Script para conectar este sistema con Google Sheets y permitir la creación automática de hojas diarias, consulta de KPIs y sincronización de cortes.
             </p>
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">URL de Google Apps Script:</label>
@@ -763,42 +1214,70 @@
         </div>
     </div>
 
-    <!-- Script de Funcionalidad y Conexión -->
+    <!-- ================= JAVASCRIPT DEL SISTEMA ================= -->
     <script>
-        // Funciones de Autenticación
-        function handleLogin(e) {
-            e.preventDefault();
-            const user = document.getElementById('loginUser').value.trim();
-            const pass = document.getElementById('loginPass').value.trim();
-            const errorDiv = document.getElementById('loginError');
-
-            if (user === 'Ferrogar' && pass === 'Cortesfg') {
-                localStorage.setItem('is_logged_in', 'true');
-                document.getElementById('loginScreen').classList.add('hidden');
-                errorDiv.classList.add('hidden');
-            } else {
-                errorDiv.classList.remove('hidden');
+        // =========================================================
+        // 1. SISTEMA DE USUARIOS, CONTRASEÑAS Y ROLES POR SUCURSAL
+        // =========================================================
+        const USUARIOS_SISTEMA = {
+            'ferrogar': {
+                usuario: 'Ferrogar',
+                contrasena: 'AdminFg',
+                rol: 'admin',
+                sucursal: null, // Acceso a TODO
+                nombre: 'Administrador General'
+            },
+            'aguila': {
+                usuario: 'Aguila',
+                contrasena: 'Construgaraguila1',
+                rol: 'sucursal',
+                sucursal: 'CONSTRUGAR AGUILA',
+                nombre: 'Construgar Águila'
+            },
+            'autopista': {
+                usuario: 'Autopista',
+                contrasena: 'AutopistaConstrugar',
+                rol: 'sucursal',
+                sucursal: 'CONSTRUGAR AUTOPISTA',
+                nombre: 'Construgar Autopista'
+            },
+            'comalapa': {
+                usuario: 'Comalapa',
+                contrasena: 'FgComalapa2',
+                rol: 'sucursal',
+                sucursal: 'FG COMALAPA',
+                nombre: 'FG Comalapa'
+            },
+            'hierrogar': {
+                usuario: 'Hierrogar',
+                contrasena: 'HierrogarFg',
+                rol: 'sucursal',
+                sucursal: 'FG HIERROGAR',
+                nombre: 'FG Hierrogar'
+            },
+            'viñedo': {
+                usuario: 'Viñedo',
+                contrasena: 'Ferrogarviñedo',
+                rol: 'sucursal',
+                sucursal: 'FG VIÑEDO',
+                nombre: 'FG Viñedo'
+            },
+            'vinedo': {
+                usuario: 'Viñedo',
+                contrasena: 'Ferrogarviñedo',
+                rol: 'sucursal',
+                sucursal: 'FG VIÑEDO',
+                nombre: 'FG Viñedo'
+            },
+            'matriz': {
+                usuario: 'Matriz',
+                contrasena: 'Fgmatriz01',
+                rol: 'sucursal',
+                sucursal: 'FG MATRIZ',
+                nombre: 'FG Matriz'
             }
-        }
+        };
 
-        function handleLogout() {
-            localStorage.removeItem('is_logged_in');
-            document.getElementById('loginUser').value = '';
-            document.getElementById('loginPass').value = '';
-            document.getElementById('loginScreen').classList.remove('hidden');
-        }
-
-        // Verificar sesión activa al cargar
-        document.addEventListener('DOMContentLoaded', () => {
-            const isLoggedIn = localStorage.getItem('is_logged_in');
-            if (isLoggedIn === 'true') {
-                document.getElementById('loginScreen').classList.add('hidden');
-            } else {
-                document.getElementById('loginScreen').classList.remove('hidden');
-            }
-        });
-
-        // Sucursales requeridas
         const SUCURSALES = [
             "FG MATRIZ",
             "FG HIERROGAR",
@@ -808,7 +1287,143 @@
             "CONSTRUGAR AGUILA"
         ];
 
-        // Función para obtener fecha local en formato YYYY-MM-DD
+        // Estado global de la sesión
+        let usuarioActual = null;
+        let cortesBuscadosActuales = [];
+        let corteSeleccionadoHoja = null;
+
+        // Función normalizadora de nombres de usuario para login tolerante a mayúsculas
+        function limpiarClaveUsuario(str) {
+            if (!str) return '';
+            return str.trim().toLowerCase();
+        }
+
+        // Manejador del Login
+        function handleLogin(e) {
+            e.preventDefault();
+            const userInput = document.getElementById('loginUser').value.trim();
+            const passInput = document.getElementById('loginPass').value.trim();
+            const errorDiv = document.getElementById('loginError');
+
+            const key = limpiarClaveUsuario(userInput);
+            const userConfig = USUARIOS_SISTEMA[key];
+
+            if (userConfig && userConfig.contrasena === passInput) {
+                usuarioActual = {
+                    usuario: userConfig.usuario,
+                    rol: userConfig.rol,
+                    sucursal: userConfig.sucursal,
+                    nombre: userConfig.nombre
+                };
+                localStorage.setItem('auth_session_user', JSON.stringify(usuarioActual));
+                localStorage.setItem('is_logged_in', 'true');
+                
+                document.getElementById('loginScreen').classList.add('hidden');
+                errorDiv.classList.add('hidden');
+                document.getElementById('loginPass').value = '';
+
+                aplicarPermisosUsuario();
+                loadKPIs();
+                cargarCalendarioCortes();
+                cargarReporteVentas();
+            } else {
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        // Manejador de Logout
+        function handleLogout() {
+            localStorage.removeItem('auth_session_user');
+            localStorage.removeItem('is_logged_in');
+            usuarioActual = null;
+            document.getElementById('loginUser').value = '';
+            document.getElementById('loginPass').value = '';
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        // Aplicación estricta de permisos según el Rol y la Sucursal
+        function aplicarPermisosUsuario() {
+            if (!usuarioActual) return;
+
+            const badgeName = document.getElementById('userBadgeName');
+            const badgeRole = document.getElementById('userBadgeRole');
+            const btnConfig = document.getElementById('btnConfigModalTrigger');
+
+            badgeName.textContent = `${usuarioActual.usuario}`;
+            
+            if (usuarioActual.rol === 'admin') {
+                badgeRole.textContent = 'ADMIN';
+                badgeRole.className = 'px-2 py-0.5 rounded text-[10px] bg-purple-500 text-white font-extrabold uppercase shadow-sm';
+                btnConfig.classList.remove('hidden');
+
+                // Títulos e Indicadores
+                document.getElementById('kpiTituloPrincipal').textContent = 'Resumen Ejecutivo por Sucursal (Todas las Sucursales)';
+                document.getElementById('kpiSubtituloPrincipal').textContent = 'Visualización en tiempo real de ingresos, egresos, neto y último retiro registrado en todas las sucursales.';
+                document.getElementById('kpiAdminSummary').classList.remove('hidden');
+
+                // Habilitar selección de todas las sucursales
+                habilitarSelectSucursal('sucursal', true);
+                habilitarSelectSucursal('searchSucursal', true);
+                habilitarSelectSucursal('editLoadSucursal', true);
+                habilitarSelectSucursal('calSucursalSelect', true);
+
+                document.getElementById('sucursalBloqueadaAviso').classList.add('hidden');
+
+            } else {
+                // Usuario de Sucursal: Restricción absoluta
+                badgeRole.textContent = usuarioActual.sucursal;
+                badgeRole.className = 'px-2 py-0.5 rounded text-[10px] bg-emerald-400 text-brand-950 font-extrabold uppercase shadow-sm';
+                btnConfig.classList.add('hidden'); // Ocultar configuración GAS
+
+                // Títulos personalizados para sucursal
+                document.getElementById('kpiTituloPrincipal').textContent = `KPIs de ${usuarioActual.nombre}`;
+                document.getElementById('kpiSubtituloPrincipal').textContent = `Visualizando únicamente los datos y cortes correspondientes a ${usuarioActual.sucursal}.`;
+                document.getElementById('kpiAdminSummary').classList.add('hidden');
+
+                // Bloquear selectores estrictamente a la sucursal asignada
+                bloquearSelectSucursal('sucursal', usuarioActual.sucursal);
+                bloquearSelectSucursal('searchSucursal', usuarioActual.sucursal);
+                bloquearSelectSucursal('editLoadSucursal', usuarioActual.sucursal);
+                bloquearSelectSucursal('calSucursalSelect', usuarioActual.sucursal);
+
+                document.getElementById('sucursalBloqueadaAviso').classList.remove('hidden');
+            }
+        }
+
+        // Helpers para restringir o liberar selects de sucursales
+        function bloquearSelectSucursal(selectId, sucursalPermitida) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+
+            Array.from(select.options).forEach(opt => {
+                if (opt.value && opt.value !== sucursalPermitida) {
+                    opt.hidden = true;
+                    opt.disabled = true;
+                } else {
+                    opt.hidden = false;
+                    opt.disabled = false;
+                }
+            });
+
+            select.value = sucursalPermitida;
+            select.disabled = true;
+            select.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-700');
+        }
+
+        function habilitarSelectSucursal(selectId, esAdmin) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+
+            Array.from(select.options).forEach(opt => {
+                opt.hidden = false;
+                opt.disabled = false;
+            });
+
+            select.disabled = false;
+            select.classList.remove('bg-slate-100', 'cursor-not-allowed');
+        }
+
+        // Formato seguro de fecha local YYYY-MM-DD
         function obtenerFechaLocal() {
             const d = new Date();
             const year = d.getFullYear();
@@ -817,7 +1432,7 @@
             return `${year}-${month}-${day}`;
         }
 
-        // Inicialización
+        // Inicialización del Sistema al cargar DOM
         document.addEventListener('DOMContentLoaded', () => {
             const today = obtenerFechaLocal();
             document.getElementById('fecha').value = today;
@@ -826,6 +1441,7 @@
             document.getElementById('editLoadFecha').value = today;
             document.getElementById('filtroVentasFecha').value = today;
             document.getElementById('filtroVentasMes').value = today.substring(0, 7);
+            document.getElementById('calMesInput').value = today.substring(0, 7);
 
             // Poblar selector de años
             const anioSelect = document.getElementById('filtroVentasAnio');
@@ -841,44 +1457,487 @@
             if (!localStorage.getItem('gas_script_url')) {
                 localStorage.setItem('gas_script_url', defaultScriptUrl);
             }
+            document.getElementById('scriptUrlInput').value = localStorage.getItem('gas_script_url') || defaultScriptUrl;
 
-            const savedUrl = localStorage.getItem('gas_script_url') || defaultScriptUrl;
-            document.getElementById('scriptUrlInput').value = savedUrl;
-
+            // Filas iniciales dinámicas
             addCxcRow('cxcContainer');
             addEgresoRow('egresoContainer');
-            loadKPIs();
-            cargarReporteVentas();
+
+            // Verificar si hay sesión activa previa
+            const isLoggedIn = localStorage.getItem('is_logged_in');
+            const savedUser = localStorage.getItem('auth_session_user');
+
+            if (isLoggedIn === 'true' && savedUser) {
+                try {
+                    usuarioActual = JSON.parse(savedUser);
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    aplicarPermisosUsuario();
+                    loadKPIs();
+                    cargarCalendarioCortes();
+                    cargarReporteVentas();
+                } catch (e) {
+                    handleLogout();
+                }
+            } else {
+                document.getElementById('loginScreen').classList.remove('hidden');
+            }
         });
 
         // Cambio de pestañas
         function switchTab(tabId) {
-            ['kpiTab', 'ventasTab', 'inputTab', 'searchTab', 'editTab'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
+            ['kpiTab', 'calendarioTab', 'ventasTab', 'inputTab', 'searchTab', 'editTab'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
             });
-            ['btnKpiTab', 'btnVentasTab', 'btnInputTab', 'btnSearchTab', 'btnEditTab'].forEach(id => {
+            ['btnKpiTab', 'btnCalendarioTab', 'btnVentasTab', 'btnInputTab', 'btnSearchTab', 'btnEditTab'].forEach(id => {
                 const btn = document.getElementById(id);
-                btn.classList.remove('border-brand-600', 'text-brand-700', 'font-bold');
-                btn.classList.add('border-transparent', 'text-slate-500', 'font-semibold');
+                if (btn) {
+                    btn.classList.remove('border-brand-600', 'text-brand-700', 'font-bold');
+                    btn.classList.add('border-transparent', 'text-slate-500', 'font-semibold');
+                }
             });
 
-            document.getElementById(tabId).classList.remove('hidden');
+            const target = document.getElementById(tabId);
+            if (target) target.classList.remove('hidden');
+
             const activeBtnMap = {
                 'kpiTab': 'btnKpiTab',
+                'calendarioTab': 'btnCalendarioTab',
                 'ventasTab': 'btnVentasTab',
                 'inputTab': 'btnInputTab',
                 'searchTab': 'btnSearchTab',
                 'editTab': 'btnEditTab'
             };
             const activeBtn = document.getElementById(activeBtnMap[tabId]);
-            activeBtn.classList.add('border-brand-600', 'text-brand-700', 'font-bold');
-            activeBtn.classList.remove('border-transparent', 'text-slate-500', 'font-semibold');
+            if (activeBtn) {
+                activeBtn.classList.add('border-brand-600', 'text-brand-700', 'font-bold');
+                activeBtn.classList.remove('border-transparent', 'text-slate-500', 'font-semibold');
+            }
 
             if (tabId === 'kpiTab') loadKPIs();
+            if (tabId === 'calendarioTab') cargarCalendarioCortes();
             if (tabId === 'ventasTab') cargarReporteVentas();
+            if (tabId === 'searchTab') buscarCortes();
         }
 
-        // Toggle filtros de ventas semanales / mensuales / anuales
+        // =========================================================
+        // 2. CARGA DE KPIS CON ÚLTIMO RETIRO Y CONTROL DE ACCESO
+        // =========================================================
+        async function loadKPIs() {
+            const container = document.getElementById('kpiContainer');
+            const fecha = document.getElementById('kpiDateFilter').value;
+            const scriptUrl = localStorage.getItem('gas_script_url');
+
+            container.innerHTML = `<div class="col-span-full text-center py-8 text-slate-500 font-semibold"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Cargando KPIs desde Google Sheets...</div>`;
+
+            if (!scriptUrl) {
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-amber-600 font-semibold">URL de Google Apps Script no configurada.</div>`;
+                return;
+            }
+
+            try {
+                const ts = Date.now();
+                const response = await fetch(`${scriptUrl}?action=getKPIs&fecha=${encodeURIComponent(fecha)}&_t=${ts}`, {
+                    method: 'GET',
+                    redirect: 'follow'
+                });
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    container.innerHTML = '';
+
+                    // Filtrar sucursales según el rol
+                    const sucursalesMostrar = (usuarioActual && usuarioActual.rol === 'sucursal')
+                        ? [usuarioActual.sucursal]
+                        : SUCURSALES;
+
+                    let totalIngresosGrupo = 0;
+                    let totalEgresosGrupo = 0;
+                    let totalNetoGrupo = 0;
+                    let totalUltimoRetiroGrupo = 0;
+
+                    // Si es admin calcular totales consolidables
+                    SUCURSALES.forEach(s => {
+                        const d = result.data[s] || { ingresos: 0, egresos: 0, neto: 0, ultimoRetiro: 0 };
+                        totalIngresosGrupo += Number(d.ingresos) || 0;
+                        totalEgresosGrupo += Number(d.egresos) || 0;
+                        totalNetoGrupo += Number(d.neto) || 0;
+                        totalUltimoRetiroGrupo += Number(d.ultimoRetiro) || 0;
+                    });
+
+                    if (document.getElementById('adminTotalIngresos')) {
+                        document.getElementById('adminTotalIngresos').textContent = `$${totalIngresosGrupo.toFixed(2)}`;
+                        document.getElementById('adminTotalEgresos').textContent = `$${totalEgresosGrupo.toFixed(2)}`;
+                        document.getElementById('adminTotalNeto').textContent = `$${totalNetoGrupo.toFixed(2)}`;
+                        document.getElementById('adminTotalUltimoRetiro').textContent = `$${totalUltimoRetiroGrupo.toFixed(2)}`;
+                    }
+
+                    // Renderizar tarjetas autorizadas
+                    sucursalesMostrar.forEach(suc => {
+                        const data = result.data[suc] || { ingresos: 0, egresos: 0, neto: 0, ultimoRetiro: 0 };
+                        const card = document.createElement('div');
+                        card.className = "bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4 hover:shadow-md transition";
+                        card.innerHTML = `
+                            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                                <div>
+                                    <h3 class="font-extrabold text-slate-900 text-base flex items-center">
+                                        <i class="fa-solid fa-store text-brand-600 mr-2"></i> ${suc}
+                                    </h3>
+                                </div>
+                                <span class="text-xs bg-slate-100 text-slate-600 font-semibold px-2.5 py-1 rounded-md">
+                                    <i class="fa-regular fa-calendar mr-1"></i>${fecha}
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div class="bg-emerald-50/60 p-3 rounded-lg border border-emerald-100">
+                                    <span class="block text-xs font-bold text-emerald-800 uppercase">Ingresos</span>
+                                    <span class="text-lg font-extrabold text-emerald-600">$${(Number(data.ingresos) || 0).toFixed(2)}</span>
+                                </div>
+                                <div class="bg-rose-50/60 p-3 rounded-lg border border-rose-100">
+                                    <span class="block text-xs font-bold text-rose-800 uppercase">Egresos</span>
+                                    <span class="text-lg font-extrabold text-rose-600">$${(Number(data.egresos) || 0).toFixed(2)}</span>
+                                </div>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-lg flex justify-between items-center border border-slate-200">
+                                <span class="text-xs font-bold text-slate-700">NETO (Ing. - Egr.):</span>
+                                <span class="text-base font-black ${Number(data.neto) >= 0 ? 'text-brand-700' : 'text-rose-600'}">$${(Number(data.neto) || 0).toFixed(2)}</span>
+                            </div>
+                            <!-- ÚLTIMO RETIRO DESTACADO EN EL KPI -->
+                            <div class="bg-amber-50 p-3 rounded-lg flex justify-between items-center border border-amber-200 shadow-sm">
+                                <span class="text-xs font-extrabold text-amber-900 flex items-center">
+                                    <i class="fa-solid fa-hand-holding-dollar text-amber-600 text-sm mr-2"></i> ÚLTIMO RETIRO:
+                                </span>
+                                <span class="text-base font-black text-amber-800">$${(Number(data.ultimoRetiro) || 0).toFixed(2)}</span>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+
+                } else {
+                    container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error al obtener datos: ${result.message || 'Error desconocido'}</div>`;
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error de conexión con Google Apps Script.</div>`;
+            }
+        }
+
+        // =========================================================
+        // 3. CALENDARIO DE CORTES: CORTES INGRESADOS VS FALTANTES
+        // =========================================================
+        async function cargarCalendarioCortes() {
+            const grid = document.getElementById('calGridDias');
+            const mesInput = document.getElementById('calMesInput').value || obtenerFechaLocal().substring(0, 7);
+            const sucursalSelect = document.getElementById('calSucursalSelect').value;
+            const scriptUrl = localStorage.getItem('gas_script_url');
+
+            // Determinar sucursal efectiva según usuario
+            const sucursalFiltro = (usuarioActual && usuarioActual.rol === 'sucursal')
+                ? usuarioActual.sucursal
+                : sucursalSelect;
+
+            grid.innerHTML = `<div class="col-span-7 text-center py-12 text-slate-500 font-semibold"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Cargando calendario de cortes del mes...</div>`;
+
+            const [yearStr, monthStr] = mesInput.split('-');
+            const year = parseInt(yearStr, 10);
+            const month = parseInt(monthStr, 10);
+
+            // Nombres de mes
+            const nombresMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            document.getElementById('calTituloMes').textContent = `Mes: ${nombresMeses[month - 1]} ${year} ${sucursalFiltro === 'TODAS' ? '(Todas las Sucursales)' : ' - ' + sucursalFiltro}`;
+
+            if (!scriptUrl) {
+                grid.innerHTML = `<div class="col-span-7 text-center py-8 text-amber-600 font-semibold">Configure la URL de Google Apps Script.</div>`;
+                return;
+            }
+
+            try {
+                const ts = Date.now();
+                // Consultamos todos los cortes del mes desde el backend
+                let url = `${scriptUrl}?action=getCortesMes&mes=${encodeURIComponent(mesInput)}&_t=${ts}`;
+                if (sucursalFiltro !== 'TODAS') {
+                    url += `&sucursal=${encodeURIComponent(sucursalFiltro)}`;
+                }
+
+                let result;
+                try {
+                    const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+                    result = await response.json();
+                } catch (e) {
+                    // Fallback directo a buscarCortes si la versión del backend no tuviera getCortesMes
+                    const fallbackUrl = `${scriptUrl}?action=buscarCortes&sucursal=${sucursalFiltro === 'TODAS' ? '' : encodeURIComponent(sucursalFiltro)}&_t=${ts}`;
+                    const fbResp = await fetch(fallbackUrl, { method: 'GET', redirect: 'follow' });
+                    result = await fbResp.json();
+                }
+
+                // Agrupar cortes por fecha YYYY-MM-DD
+                const cortesPorFecha = {};
+                if (result && result.data && Array.isArray(result.data)) {
+                    result.data.forEach(c => {
+                        if (!c.fecha) return;
+                        if (!cortesPorFecha[c.fecha]) {
+                            cortesPorFecha[c.fecha] = [];
+                        }
+                        cortesPorFecha[c.fecha].push(c);
+                    });
+                }
+
+                // Generar los días del mes en el calendario
+                const primerDiaMes = new Date(year, month - 1, 1);
+                const ultimoDiaMes = new Date(year, month, 0);
+                const totalDias = ultimoDiaMes.getDate();
+
+                // Día de la semana del 1 de mes (0 = Domingo, 1 = Lunes, ...)
+                // Lo adaptamos a Lunes = 0, ..., Domingo = 6
+                let primerDiaSemana = primerDiaMes.getDay() - 1;
+                if (primerDiaSemana === -1) primerDiaSemana = 6;
+
+                const hoyStr = obtenerFechaLocal();
+                let diasEvaluados = 0;
+                let cortesIngresadosCount = 0;
+                let cortesFaltantesCount = 0;
+
+                grid.innerHTML = '';
+
+                // Espacios vacíos antes del día 1
+                for (let i = 0; i < primerDiaSemana; i++) {
+                    const empty = document.createElement('div');
+                    empty.className = 'h-24 sm:h-28 bg-slate-50/50 rounded-xl border border-dashed border-slate-200';
+                    grid.appendChild(empty);
+                }
+
+                // Días del mes
+                for (let d = 1; d <= totalDias; d++) {
+                    const dayStr = String(d).padStart(2, '0');
+                    const fechaActualDia = `${yearStr}-${monthStr}-${dayStr}`;
+                    const esHoy = (fechaActualDia === hoyStr);
+                    const esPasadoOHoy = (fechaActualDia <= hoyStr);
+
+                    const cortesDelDia = cortesPorFecha[fechaActualDia] || [];
+                    const dayCard = document.createElement('div');
+
+                    let estadoClase = 'bg-slate-50 border-slate-200 text-slate-400';
+                    let contenidoEstado = '';
+
+                    if (esPasadoOHoy) {
+                        diasEvaluados++;
+
+                        if (sucursalFiltro !== 'TODAS') {
+                            // Modo Sucursal Individual
+                            const corte = cortesDelDia.find(c => c.sucursal.toUpperCase() === sucursalFiltro.toUpperCase());
+                            if (corte) {
+                                cortesIngresadosCount++;
+                                estadoClase = 'bg-emerald-50/80 border-emerald-300 hover:border-emerald-500 hover:shadow-md cursor-pointer';
+                                contenidoEstado = `
+                                    <div class="mt-1">
+                                        <span class="inline-flex items-center text-[10px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
+                                            <i class="fa-solid fa-check mr-1"></i> Ingresado
+                                        </span>
+                                        <div class="text-[11px] font-extrabold text-emerald-700 mt-1">$${(Number(corte.totalIngresos) || 0).toFixed(2)}</div>
+                                    </div>
+                                `;
+                                dayCard.onclick = () => verHojaCorte(corte.sucursal, corte.fecha);
+                            } else {
+                                cortesFaltantesCount++;
+                                estadoClase = 'bg-rose-50/80 border-rose-300 hover:border-rose-400';
+                                contenidoEstado = `
+                                    <div class="mt-1">
+                                        <span class="inline-flex items-center text-[10px] font-bold text-rose-800 bg-rose-100 px-1.5 py-0.5 rounded">
+                                            <i class="fa-solid fa-triangle-exclamation mr-1"></i> Falta Ingresar
+                                        </span>
+                                        <div class="text-[10px] text-rose-600 font-semibold mt-1">Pendiente</div>
+                                    </div>
+                                `;
+                            }
+                        } else {
+                            // Modo Administrador General (Todas las Sucursales)
+                            const totalEsperadas = SUCURSALES.length;
+                            const registradasHoy = cortesDelDia.length;
+
+                            if (registradasHoy === totalEsperadas) {
+                                cortesIngresadosCount++;
+                                estadoClase = 'bg-emerald-50/80 border-emerald-300 hover:border-emerald-500 hover:shadow-md cursor-pointer';
+                                contenidoEstado = `
+                                    <div class="mt-1">
+                                        <span class="inline-flex items-center text-[10px] font-extrabold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
+                                            <i class="fa-solid fa-check-double mr-1"></i> ${registradasHoy}/${totalEsperadas} Todas
+                                        </span>
+                                    </div>
+                                `;
+                            } else if (registradasHoy > 0) {
+                                estadoClase = 'bg-amber-50/80 border-amber-300 hover:border-amber-500 hover:shadow-md cursor-pointer';
+                                contenidoEstado = `
+                                    <div class="mt-1">
+                                        <span class="inline-flex items-center text-[10px] font-extrabold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
+                                            <i class="fa-solid fa-circle-exclamation mr-1"></i> ${registradasHoy}/${totalEsperadas} Parcial
+                                        </span>
+                                        <div class="text-[10px] text-amber-700 font-bold mt-1">Faltan ${totalEsperadas - registradasHoy}</div>
+                                    </div>
+                                `;
+                            } else {
+                                cortesFaltantesCount++;
+                                estadoClase = 'bg-rose-50/80 border-rose-300 hover:border-rose-400 hover:shadow-md cursor-pointer';
+                                contenidoEstado = `
+                                    <div class="mt-1">
+                                        <span class="inline-flex items-center text-[10px] font-bold text-rose-800 bg-rose-100 px-1.5 py-0.5 rounded">
+                                            <i class="fa-solid fa-xmark mr-1"></i> 0/${totalEsperadas} Sin cortes
+                                        </span>
+                                    </div>
+                                `;
+                            }
+
+                            // Al hacer clic como admin abre el modal para ver cuáles ingresaron y cuáles faltan
+                            dayCard.onclick = () => abrirCalDetalleModal(fechaActualDia, cortesDelDia);
+                        }
+
+                    } else {
+                        // Día futuro
+                        contenidoEstado = `<div class="text-[10px] text-slate-300 mt-2">Día futuro</div>`;
+                    }
+
+                    dayCard.className = `h-24 sm:h-28 p-2 rounded-xl border flex flex-col justify-between transition ${estadoClase} ${esHoy ? 'ring-2 ring-brand-600 font-bold' : ''}`;
+                    dayCard.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <span class="text-xs sm:text-sm font-extrabold ${esHoy ? 'text-brand-700 bg-brand-100 px-1.5 rounded' : 'text-slate-800'}">${d}</span>
+                            ${esHoy ? '<span class="text-[9px] bg-brand-600 text-white font-bold px-1 rounded">Hoy</span>' : ''}
+                        </div>
+                        <div>
+                            ${contenidoEstado}
+                        </div>
+                    `;
+                    grid.appendChild(dayCard);
+                }
+
+                // Actualizar contadores de cumplimiento
+                document.getElementById('calDiasEvaluadosLbl').textContent = diasEvaluados;
+                document.getElementById('calCortesIngresadosLbl').textContent = cortesIngresadosCount;
+                document.getElementById('calCortesFaltantesLbl').textContent = cortesFaltantesCount;
+
+                const porcentaje = diasEvaluados > 0 ? Math.round((cortesIngresadosCount / diasEvaluados) * 100) : 0;
+                const calPorcentajeLbl = document.getElementById('calPorcentajeLbl');
+                calPorcentajeLbl.textContent = `${porcentaje}%`;
+                calPorcentajeLbl.className = `text-2xl font-extrabold ${porcentaje >= 80 ? 'text-emerald-400' : (porcentaje >= 50 ? 'text-amber-400' : 'text-rose-400')}`;
+
+            } catch (err) {
+                console.error(err);
+                grid.innerHTML = `<div class="col-span-7 text-center py-8 text-rose-600 font-semibold">Error al conectar con Google Sheets para el calendario.</div>`;
+            }
+        }
+
+        // Modal de detalle del día en el calendario (Para saber qué sucursales entregaron y cuáles no)
+        function abrirCalDetalleModal(fecha, cortesDelDia) {
+            document.getElementById('calModalFechaTexto').textContent = `Fecha: ${fecha}`;
+            const listaContainer = document.getElementById('calModalListaSucursales');
+            listaContainer.innerHTML = '';
+
+            SUCURSALES.forEach(suc => {
+                const corte = cortesDelDia.find(c => c.sucursal.toUpperCase() === suc.toUpperCase());
+                const item = document.createElement('div');
+                item.className = "flex justify-between items-center p-3 rounded-xl border text-xs";
+
+                if (corte) {
+                    item.className += " bg-emerald-50 border-emerald-200";
+                    item.innerHTML = `
+                        <div>
+                            <span class="font-extrabold text-slate-900 block">${suc}</span>
+                            <span class="text-emerald-700 font-semibold text-[11px]"><i class="fa-solid fa-circle-check mr-1 text-emerald-600"></i> Corte Ingresado por: ${corte.nombreCajera || 'N/D'}</span>
+                            <div class="text-[11px] text-slate-600">Neto: $${(Number(corte.neto) || 0).toFixed(2)} | Últ. Retiro: $${(Number(corte.ultimoRetiro) || 0).toFixed(2)}</div>
+                        </div>
+                        <button onclick="cerrarCalDetalleModal(); verHojaCorte('${suc}', '${fecha}');" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded-lg font-bold shadow text-xs">
+                            <i class="fa-solid fa-file-invoice mr-1"></i> Ver Hoja
+                        </button>
+                    `;
+                } else {
+                    item.className += " bg-rose-50 border-rose-200";
+                    item.innerHTML = `
+                        <div>
+                            <span class="font-extrabold text-slate-900 block">${suc}</span>
+                            <span class="text-rose-700 font-bold text-[11px]"><i class="fa-solid fa-circle-xmark mr-1 text-rose-600"></i> FALTANTE / NO INGRESADO</span>
+                            <div class="text-[11px] text-slate-400">Sin registro en Google Sheets</div>
+                        </div>
+                        <span class="text-rose-600 text-xs font-bold uppercase bg-white px-2 py-1 rounded border border-rose-200">Pendiente</span>
+                    `;
+                }
+                listaContainer.appendChild(item);
+            });
+
+            document.getElementById('calDetalleModal').classList.remove('hidden');
+        }
+
+        function cerrarCalDetalleModal() {
+            document.getElementById('calDetalleModal').classList.add('hidden');
+        }
+
+        // =========================================================
+        // 4. REPORTES DE VENTAS POR PERÍODO
+        // =========================================================
+        async function cargarReporteVentas() {
+            const container = document.getElementById('ventasSucursalesContainer');
+            const scriptUrl = localStorage.getItem('gas_script_url');
+            const tipo = document.getElementById('tipoPeriodoVentas').value;
+            const fecha = document.getElementById('filtroVentasFecha').value;
+            const mes = document.getElementById('filtroVentasMes').value;
+            const anio = document.getElementById('filtroVentasAnio').value;
+
+            container.innerHTML = `<div class="col-span-full text-center py-8 text-slate-500 font-semibold"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Calculando reporte de ventas...</div>`;
+
+            if (!scriptUrl) {
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-amber-600 font-semibold">URL de Google Apps Script no configurada.</div>`;
+                return;
+            }
+
+            try {
+                const ts = Date.now();
+                const url = `${scriptUrl}?action=getVentasPeriodo&tipo=${encodeURIComponent(tipo)}&fecha=${encodeURIComponent(fecha)}&mes=${encodeURIComponent(mes)}&anio=${encodeURIComponent(anio)}&_t=${ts}`;
+                const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    document.getElementById('rangoCalculadoInfo').textContent = `Período actual seleccionado: ${result.rangoTexto}`;
+
+                    const sucursalesMostrar = (usuarioActual && usuarioActual.rol === 'sucursal')
+                        ? [usuarioActual.sucursal]
+                        : SUCURSALES;
+
+                    let totalGeneral = 0;
+                    let maxVenta = -1;
+                    let topSucursal = 'N/D';
+
+                    container.innerHTML = '';
+                    sucursalesMostrar.forEach(suc => {
+                        const venta = Number(result.data[suc]) || 0;
+                        totalGeneral += venta;
+                        if (venta > maxVenta && venta > 0) {
+                            maxVenta = venta;
+                            topSucursal = suc;
+                        }
+
+                        const card = document.createElement('div');
+                        card.className = "bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-3 hover:shadow-md transition flex justify-between items-center";
+                        card.innerHTML = `
+                            <div>
+                                <h3 class="font-extrabold text-slate-800 text-sm flex items-center">
+                                    <i class="fa-solid fa-store text-brand-600 mr-2"></i> ${suc}
+                                </h3>
+                                <span class="text-xs text-slate-500">Ventas Totales del Período</span>
+                            </div>
+                            <span class="text-xl font-black text-brand-700">$${venta.toFixed(2)}</span>
+                        `;
+                        container.appendChild(card);
+                    });
+
+                    document.getElementById('ventasTotalesPeriodoLbl').textContent = `$${totalGeneral.toFixed(2)}`;
+                    document.getElementById('sucursalTopVentasLbl').textContent = (usuarioActual && usuarioActual.rol === 'sucursal') ? usuarioActual.sucursal : topSucursal;
+
+                } else {
+                    container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error al obtener ventas: ${result.message || 'Error'}</div>`;
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error de comunicación con Google Apps Script.</div>`;
+            }
+        }
+
         function toggleFiltroPeriodo() {
             const tipo = document.getElementById('tipoPeriodoVentas').value;
             document.getElementById('wrapperFiltroFecha').classList.add('hidden');
@@ -896,28 +1955,455 @@
             cargarReporteVentas();
         }
 
-        // Modal Config
-        function openConfigModal() { document.getElementById('configModal').classList.remove('hidden'); }
-        function closeConfigModal() { document.getElementById('configModal').classList.add('hidden'); }
-        function saveScriptUrl() {
-            const url = document.getElementById('scriptUrlInput').value.trim();
-            localStorage.setItem('gas_script_url', url);
-            closeConfigModal();
-            alert('¡URL de Google Apps Script guardada exitosamente!');
-            loadKPIs();
+        // =========================================================
+        // 5. BÚSQUEDA DE CORTES Y VISTA COMO EN HOJA + EXCEL / PDF
+        // =========================================================
+        async function buscarCortes() {
+            const tbody = document.getElementById('tablaResultadosCortes');
+            const sucursalSelect = document.getElementById('searchSucursal').value;
+            const fecha = document.getElementById('searchFecha').value;
+            const scriptUrl = localStorage.getItem('gas_script_url');
+
+            // Seguridad de sucursal
+            const sucursalEfectiva = (usuarioActual && usuarioActual.rol === 'sucursal')
+                ? usuarioActual.sucursal
+                : sucursalSelect;
+
+            tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-500 font-semibold"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Buscando cortes en Google Sheets...</td></tr>`;
+
+            if (!scriptUrl) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-amber-600 font-semibold">URL de Google Apps Script no configurada.</td></tr>`;
+                return;
+            }
+
+            try {
+                const ts = Date.now();
+                const url = `${scriptUrl}?action=buscarCortes&sucursal=${encodeURIComponent(sucursalEfectiva)}&fecha=${encodeURIComponent(fecha)}&_t=${ts}`;
+                const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+                const result = await response.json();
+
+                if (result.success && result.data && result.data.length > 0) {
+                    cortesBuscadosActuales = result.data;
+                    document.getElementById('searchBulkActions').classList.remove('hidden');
+                    document.getElementById('searchResultCount').textContent = result.data.length;
+
+                    tbody.innerHTML = '';
+                    result.data.forEach(item => {
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-slate-50 transition";
+                        tr.innerHTML = `
+                            <td class="p-3 font-semibold text-slate-900">${item.fecha}</td>
+                            <td class="p-3 font-bold text-slate-800">${item.sucursal}</td>
+                            <td class="p-3 text-slate-600">${item.nombreCajera || 'N/D'}</td>
+                            <td class="p-3 text-right text-emerald-600 font-bold">$${Number(item.totalIngresos || 0).toFixed(2)}</td>
+                            <td class="p-3 text-right text-rose-600 font-bold">$${Number(item.totalEgresos || 0).toFixed(2)}</td>
+                            <td class="p-3 text-right font-black ${Number(item.neto) >= 0 ? 'text-brand-700' : 'text-rose-600'}">$${Number(item.neto || 0).toFixed(2)}</td>
+                            <td class="p-3 text-right font-black text-amber-800 bg-amber-50/50">$${Number(item.ultimoRetiro || 0).toFixed(2)}</td>
+                            <td class="p-3 text-center">
+                                <div class="flex items-center justify-center space-x-1">
+                                    <button onclick="verHojaCorte('${item.sucursal}', '${item.fecha}')" class="bg-brand-600 hover:bg-brand-700 text-white px-2 py-1 rounded text-xs font-bold transition shadow" title="Ver Hoja Completa">
+                                        <i class="fa-solid fa-file-invoice"></i> <span class="hidden lg:inline">Ver Hoja</span>
+                                    </button>
+                                    <button onclick="descargarCortePDFDirecto('${item.sucursal}', '${item.fecha}')" class="bg-rose-600 hover:bg-rose-700 text-white px-2 py-1 rounded text-xs font-bold transition shadow" title="Descargar PDF">
+                                        <i class="fa-solid fa-file-pdf"></i>
+                                    </button>
+                                    <button onclick="descargarCorteExcelDirecto('${item.sucursal}', '${item.fecha}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded text-xs font-bold transition shadow" title="Descargar Excel">
+                                        <i class="fa-solid fa-file-excel"></i>
+                                    </button>
+                                    <button onclick="prepararEdicionDirecta('${item.sucursal}', '${item.fecha}')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-1 rounded text-xs font-bold transition" title="Editar">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    cortesBuscadosActuales = [];
+                    document.getElementById('searchBulkActions').classList.add('hidden');
+                    tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-400 font-medium">No se encontraron registros de cortes con los filtros seleccionados.</td></tr>`;
+                }
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-rose-600 font-semibold">Error al conectar con Google Apps Script.</td></tr>`;
+            }
         }
 
-        // Agregar fila dinámica Cuentas por Cobrar
+        // =========================================================
+        // 6. VISUALIZAR CORTE "COMO EN HOJA" (DETALLE TOTAL)
+        // =========================================================
+        async function verHojaCorte(sucursal, fecha) {
+            const scriptUrl = localStorage.getItem('gas_script_url');
+            if (!scriptUrl) {
+                alert('URL de Google Apps Script no configurada.');
+                return;
+            }
+
+            // Mostrar modal con estado de carga
+            document.getElementById('hojaCorteModal').classList.remove('hidden');
+            document.getElementById('docFecha').textContent = fecha;
+            document.getElementById('docSucursal').textContent = sucursal;
+            document.getElementById('docNombreCajera').textContent = "Cargando datos completos...";
+
+            try {
+                const ts = Date.now();
+                const response = await fetch(`${scriptUrl}?action=obtenerCorteDetalle&sucursal=${encodeURIComponent(sucursal)}&fecha=${encodeURIComponent(fecha)}&_t=${ts}`, {
+                    method: 'GET',
+                    redirect: 'follow'
+                });
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    renderizarHojaCorte(result.data);
+                } else {
+                    alert('No se pudo obtener el detalle de la hoja diaria: ' + (result.message || 'Registro no encontrado'));
+                    cerrarHojaCorteModal();
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error al consultar el detalle de corte en Google Sheets.');
+                cerrarHojaCorteModal();
+            }
+        }
+
+        // Renderizar todos los campos en la vista de hoja
+        function renderizarHojaCorte(d) {
+            corteSeleccionadoHoja = d;
+
+            document.getElementById('docFecha').textContent = d.fecha || '--';
+            document.getElementById('docSucursal').textContent = d.sucursal || '--';
+            document.getElementById('docNombreCajera').textContent = d.nombreCajera || 'N/D';
+            document.getElementById('docNombreEncargada').textContent = d.nombreEncargada || 'N/D';
+
+            document.getElementById('docFirmaCajeraLabel').textContent = `Firma: ${d.nombreCajera || 'Cajera(o)'}`;
+            document.getElementById('docFirmaEncargadaLabel').textContent = `Firma: ${d.nombreEncargada || 'Encargada(o)'}`;
+
+            document.getElementById('docCfDel').textContent = d.cfDel || 'N/D';
+            document.getElementById('docCfAl').textContent = d.cfAl || 'N/D';
+            document.getElementById('docCcfDel').textContent = d.ccfDel || 'N/D';
+            document.getElementById('docCcfAl').textContent = d.ccfAl || 'N/D';
+
+            const saldoInicial = Number(d.saldoInicial) || 0;
+            document.getElementById('docSaldoInicial').textContent = `$${saldoInicial.toFixed(2)}`;
+
+            const vc = Number(d.ventaConsumidor) || 0;
+            const vco = Number(d.ventaContribuyentes) || 0;
+            const icxc = Number(d.ingresosCxc) || 0;
+            const oi = Number(d.otrosIngresos) || 0;
+            const totalIngresos = vc + vco + icxc + oi;
+
+            document.getElementById('docVentaConsumidor').textContent = `$${vc.toFixed(2)}`;
+            document.getElementById('docVentaContribuyentes').textContent = `$${vco.toFixed(2)}`;
+            document.getElementById('docIngresosCxc').textContent = `$${icxc.toFixed(2)}`;
+            document.getElementById('docOtrosIngresos').textContent = `$${oi.toFixed(2)}`;
+            document.getElementById('docTotalIngresos').textContent = `$${totalIngresos.toFixed(2)}`;
+            document.getElementById('docCuadreIngresos').textContent = `$${totalIngresos.toFixed(2)}`;
+
+            const ct = Number(d.cobrosTarjetas) || 0;
+            const ctr = Number(d.cobrosTransferencias) || 0;
+            const rp = Number(d.retirosParciales) || 0;
+            const totalEgresosBase = ct + ctr + rp;
+
+            document.getElementById('docCobrosTarjetas').textContent = `$${ct.toFixed(2)}`;
+            document.getElementById('docCobrosTransferencias').textContent = `$${ctr.toFixed(2)}`;
+            document.getElementById('docRetirosParciales').textContent = `$${rp.toFixed(2)}`;
+            document.getElementById('docTotalEgresosBase').textContent = `$${totalEgresosBase.toFixed(2)}`;
+
+            // Renderizar Cuentas por Cobrar Clientes
+            const tablaCxc = document.getElementById('docTablaCxc');
+            let totalCxc = 0;
+            tablaCxc.innerHTML = '';
+            if (d.cxcClientes && d.cxcClientes.length > 0) {
+                d.cxcClientes.forEach(c => {
+                    const monto = Number(c.monto) || 0;
+                    totalCxc += monto;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="p-2 font-medium text-slate-800">${c.cliente || 'N/D'}</td>
+                        <td class="p-2 text-slate-600">${c.factura || 'N/D'}</td>
+                        <td class="p-2 text-right font-bold text-slate-900">$${monto.toFixed(2)}</td>
+                    `;
+                    tablaCxc.appendChild(tr);
+                });
+            } else {
+                tablaCxc.innerHTML = `<tr><td colspan="3" class="p-2 text-center text-slate-400">Sin cuentas por cobrar registradas.</td></tr>`;
+            }
+            document.getElementById('docTotalCxcHeader').textContent = `Total: $${totalCxc.toFixed(2)}`;
+
+            // Renderizar Egresos en Efectivo
+            const tablaEgresos = document.getElementById('docTablaEgresos');
+            let totalEgresosEfectivo = 0;
+            tablaEgresos.innerHTML = '';
+            if (d.egresosCompras && d.egresosCompras.length > 0) {
+                d.egresosCompras.forEach(e => {
+                    const monto = Number(e.monto) || 0;
+                    totalEgresosEfectivo += monto;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="p-2 font-medium text-slate-800">${e.proveedor || 'N/D'}</td>
+                        <td class="p-2 text-slate-600">${e.factura || 'N/D'}</td>
+                        <td class="p-2 text-right font-bold text-rose-700">$${monto.toFixed(2)}</td>
+                    `;
+                    tablaEgresos.appendChild(tr);
+                });
+            } else {
+                tablaEgresos.innerHTML = `<tr><td colspan="3" class="p-2 text-center text-slate-400">Sin egresos en efectivo registrados.</td></tr>`;
+            }
+            document.getElementById('docTotalEgresosEfectivoHeader').textContent = `Total: $${totalEgresosEfectivo.toFixed(2)}`;
+
+            // Cuadre final
+            const totalEgresosGeneral = totalEgresosBase + totalEgresosEfectivo + totalCxc;
+            const neto = totalIngresos - totalEgresosGeneral;
+            const ultimoRetiro = Number(d.ultimoRetiro) || 0;
+            const diferencia = ultimoRetiro - neto;
+
+            document.getElementById('docCuadreEgresos').textContent = `$${totalEgresosGeneral.toFixed(2)}`;
+            document.getElementById('docCuadreNeto').textContent = `$${neto.toFixed(2)}`;
+            document.getElementById('docCuadreUltimoRetiro').textContent = `$${ultimoRetiro.toFixed(2)}`;
+
+            if (diferencia > 0) {
+                document.getElementById('docCuadreSobrante').textContent = `$${diferencia.toFixed(2)}`;
+                document.getElementById('docCuadreFaltante').textContent = `$0.00`;
+            } else if (diferencia < 0) {
+                document.getElementById('docCuadreSobrante').textContent = `$0.00`;
+                document.getElementById('docCuadreFaltante').textContent = `$${Math.abs(diferencia).toFixed(2)}`;
+            } else {
+                document.getElementById('docCuadreSobrante').textContent = `$0.00`;
+                document.getElementById('docCuadreFaltante').textContent = `$0.00`;
+            }
+        }
+
+        function cerrarHojaCorteModal() {
+            document.getElementById('hojaCorteModal').classList.add('hidden');
+        }
+
+        // =========================================================
+        // 7. DESCARGA EN PDF Y EXCEL DE CORTES
+        // =========================================================
+
+        // Descargar PDF de la Hoja Actual abierta
+        function descargarHojaActualPDF() {
+            const el = document.getElementById('hojaCorteDocumento');
+            const sucursal = (corteSeleccionadoHoja && corteSeleccionadoHoja.sucursal) ? corteSeleccionadoHoja.sucursal.replace(/\s+/g, '_') : 'Sucursal';
+            const fecha = (corteSeleccionadoHoja && corteSeleccionadoHoja.fecha) ? corteSeleccionadoHoja.fecha : obtenerFechaLocal();
+
+            const opt = {
+                margin: [6, 6, 6, 6],
+                filename: `Corte_${sucursal}_${fecha}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(el).save();
+        }
+
+        // Descargar Excel de la Hoja Actual abierta
+        function descargarHojaActualExcel() {
+            if (!corteSeleccionadoHoja) return;
+            generarExcelDeCorte(corteSeleccionadoHoja);
+        }
+
+        // Descarga directa sin abrir modal primero
+        async function descargarCortePDFDirecto(sucursal, fecha) {
+            await verHojaCorte(sucursal, fecha);
+            setTimeout(() => {
+                descargarHojaActualPDF();
+            }, 600);
+        }
+
+        async function descargarCorteExcelDirecto(sucursal, fecha) {
+            const scriptUrl = localStorage.getItem('gas_script_url');
+            try {
+                const ts = Date.now();
+                const response = await fetch(`${scriptUrl}?action=obtenerCorteDetalle&sucursal=${encodeURIComponent(sucursal)}&fecha=${encodeURIComponent(fecha)}&_t=${ts}`);
+                const result = await response.json();
+                if (result.success && result.data) {
+                    generarExcelDeCorte(result.data);
+                } else {
+                    alert('No se pudieron obtener los datos para el Excel.');
+                }
+            } catch (e) {
+                alert('Error al descargar el corte en Excel.');
+            }
+        }
+
+        // Generador universal de Excel estructurado para un corte
+        function generarExcelDeCorte(d) {
+            const wb = XLSX.utils.book_new();
+
+            const vc = Number(d.ventaConsumidor) || 0;
+            const vco = Number(d.ventaContribuyentes) || 0;
+            const icxc = Number(d.ingresosCxc) || 0;
+            const oi = Number(d.otrosIngresos) || 0;
+            const totIng = vc + vco + icxc + oi;
+
+            const ct = Number(d.cobrosTarjetas) || 0;
+            const ctr = Number(d.cobrosTransferencias) || 0;
+            const rp = Number(d.retirosParciales) || 0;
+            const totEgrBase = ct + ctr + rp;
+
+            let totCxc = 0;
+            if (d.cxcClientes) d.cxcClientes.forEach(c => totCxc += Number(c.monto) || 0);
+
+            let totEgrEfec = 0;
+            if (d.egresosCompras) d.egresosCompras.forEach(e => totEgrEfec += Number(e.monto) || 0);
+
+            const totEgrGen = totEgrBase + totEgrEfec + totCxc;
+            const neto = totIng - totEgrGen;
+            const ultRet = Number(d.ultimoRetiro) || 0;
+            const dif = ultRet - neto;
+
+            const rows = [
+                ["GRUPO FERROGAR & CONSTRUGAR"],
+                ["REPORTE OFICIAL DE CORTE DE CAJA DIARIO"],
+                [],
+                ["Sucursal:", d.sucursal, "", "Fecha:", d.fecha],
+                ["Cajera(o):", d.nombreCajera || "", "", "Encargada(o):", d.nombreEncargada || ""],
+                ["CF Del:", d.cfDel || "", "CF Al:", d.cfAl || ""],
+                ["CCF Del:", d.ccfDel || "", "CCF Al:", d.ccfAl || ""],
+                [],
+                ["SALDO INICIAL", Number(d.saldoInicial || 0)],
+                [],
+                ["DETALLE DE INGRESOS", "MONTO ($)"],
+                ["Venta Consumidor Final", vc],
+                ["Venta Contribuyentes", vco],
+                ["Ingresos por Cuentas por Cobrar", icxc],
+                ["Otros Ingresos", oi],
+                ["TOTAL INGRESOS", totIng],
+                [],
+                ["DETALLE DE EGRESOS BASE", "MONTO ($)"],
+                ["Cobros por Tarjetas", ct],
+                ["Cobros por Transferencias / Depósitos", ctr],
+                ["Retiros Parciales", rp],
+                ["SUBTOTAL EGRESOS BASE", totEgrBase],
+                [],
+                ["CUENTAS POR COBRAR CLIENTES"],
+                ["Cliente", "N° Factura", "Monto ($)"]
+            ];
+
+            if (d.cxcClientes && d.cxcClientes.length > 0) {
+                d.cxcClientes.forEach(c => rows.push([c.cliente || "", c.factura || "", Number(c.monto || 0)]));
+            } else {
+                rows.push(["Sin cuentas por cobrar registradas", "", 0]);
+            }
+            rows.push(["TOTAL CUENTAS POR COBRAR", "", totCxc]);
+            rows.push([]);
+
+            rows.push(["EGRESOS POR COMPRAS O PAGOS EN EFECTIVO"]);
+            rows.push(["Proveedor", "N° Factura", "Monto ($)"]);
+            if (d.egresosCompras && d.egresosCompras.length > 0) {
+                d.egresosCompras.forEach(e => rows.push([e.proveedor || "", e.factura || "", Number(e.monto || 0)]));
+            } else {
+                rows.push(["Sin egresos en efectivo registrados", "", 0]);
+            }
+            rows.push(["TOTAL EGRESOS EFECTIVO", "", totEgrEfec]);
+            rows.push([]);
+
+            rows.push(["CUADRE GENERAL DE CAJA", "VALOR ($)"]);
+            rows.push(["TOTAL INGRESOS", totIng]);
+            rows.push(["TOTAL EGRESOS GENERAL", totEgrGen]);
+            rows.push(["NETO (INGRESOS - EGRESOS)", neto]);
+            rows.push(["ÚLTIMO RETIRO", ultRet]);
+            rows.push(["SOBRANTE", dif > 0 ? dif : 0]);
+            rows.push(["FALTANTE", dif < 0 ? Math.abs(dif) : 0]);
+
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            XLSX.utils.book_append_sheet(wb, ws, "Corte de Caja");
+            XLSX.writeFile(wb, `Corte_${String(d.sucursal).replace(/\s+/g, '_')}_${d.fecha}.xlsx`);
+        }
+
+        // Exportar toda la lista de búsqueda actual a Excel
+        function descargarResultadosExcel() {
+            if (!cortesBuscadosActuales || cortesBuscadosActuales.length === 0) {
+                alert('No hay registros para exportar.');
+                return;
+            }
+
+            const data = cortesBuscadosActuales.map(c => ({
+                "Fecha": c.fecha,
+                "Sucursal": c.sucursal,
+                "Cajera(o)": c.nombreCajera || "N/D",
+                "Total Ingresos ($)": Number(c.totalIngresos || 0),
+                "Total Egresos ($)": Number(c.totalEgresos || 0),
+                "Neto ($)": Number(c.neto || 0),
+                "Último Retiro ($)": Number(c.ultimoRetiro || 0)
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Cortes_Consultados");
+            XLSX.writeFile(wb, `Reporte_Cortes_${obtenerFechaLocal()}.xlsx`);
+        }
+
+        // Exportar toda la lista de búsqueda a PDF
+        function descargarResultadosPDF() {
+            if (!cortesBuscadosActuales || cortesBuscadosActuales.length === 0) {
+                alert('No hay registros para exportar.');
+                return;
+            }
+
+            const div = document.createElement('div');
+            div.className = "p-6 font-sans text-xs";
+            div.innerHTML = `
+                <div style="border-bottom: 2px solid #14532d; padding-bottom: 10px; margin-bottom: 14px;">
+                    <h2 style="font-size: 16px; font-weight: bold; color: #14532d;">GRUPO FERROGAR & CONSTRUGAR</h2>
+                    <h3 style="font-size: 13px; font-weight: bold; color: #334155;">Reporte de Cortes de Caja Consultados</h3>
+                    <p style="font-size: 10px; color: #64748b;">Generado el: ${new Date().toLocaleString()}</p>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                    <thead>
+                        <tr style="background: #f1f5f9; border-bottom: 1px solid #cbd5e1;">
+                            <th style="padding: 6px; text-align: left;">Fecha</th>
+                            <th style="padding: 6px; text-align: left;">Sucursal</th>
+                            <th style="padding: 6px; text-align: left;">Cajera(o)</th>
+                            <th style="padding: 6px; text-align: right;">Ingresos</th>
+                            <th style="padding: 6px; text-align: right;">Egresos</th>
+                            <th style="padding: 6px; text-align: right;">Neto</th>
+                            <th style="padding: 6px; text-align: right;">Últ. Retiro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${cortesBuscadosActuales.map(c => `
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 6px;">${c.fecha}</td>
+                                <td style="padding: 6px; font-weight: bold;">${c.sucursal}</td>
+                                <td style="padding: 6px;">${c.nombreCajera || 'N/D'}</td>
+                                <td style="padding: 6px; text-align: right; color: #15803d; font-weight: bold;">$${Number(c.totalIngresos||0).toFixed(2)}</td>
+                                <td style="padding: 6px; text-align: right; color: #b91c1c; font-weight: bold;">$${Number(c.totalEgresos||0).toFixed(2)}</td>
+                                <td style="padding: 6px; text-align: right; font-weight: bold;">$${Number(c.neto||0).toFixed(2)}</td>
+                                <td style="padding: 6px; text-align: right; color: #b45309; font-weight: bold;">$${Number(c.ultimoRetiro||0).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            const opt = {
+                margin: [8, 8, 8, 8],
+                filename: `Lista_Cortes_${obtenerFechaLocal()}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'letter', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(div).save();
+        }
+
+        // =========================================================
+        // 8. CÁLCULOS Y FORMULARIOS DE CORTE Y EDICIÓN
+        // =========================================================
+
         function addCxcRow(containerId, cliente = '', factura = '', monto = 0) {
             const container = document.getElementById(containerId);
             const row = document.createElement('div');
             row.className = 'flex items-center space-x-2 cxc-row';
             row.innerHTML = `
                 <input type="text" placeholder="Nombre del Cliente" value="${cliente}" class="w-1/2 border border-slate-300 rounded-lg p-2 text-sm cxc-cliente" required>
-                <input type="text" placeholder="N° de Factura" value="${factura}" class="w-1/4 border border-slate-300 rounded-lg p-2 text-sm cxc-factura" required>
+                <input type="text" placeholder="N° Factura" value="${factura}" class="w-1/4 border border-slate-300 rounded-lg p-2 text-sm cxc-factura" required>
                 <div class="relative w-1/4">
                     <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400 text-sm">$</span>
-                    <input type="number" step="0.01" placeholder="0.00" value="${monto || ''}" oninput="${containerId === 'editCxcContainer' ? 'calcularTotalesEdit()' : 'calcularTotales()'}" class="w-full pl-6 pr-2 py-2 border border-slate-300 rounded-lg text-sm cxc-monto" required>
+                    <input type="number" step="0.01" placeholder="0.00" value="${monto || ''}" oninput="${containerId === 'editCxcContainer' ? 'calcularTotalesEdit()' : 'calcularTotales()'}" class="w-full pl-6 pr-2 py-2 border border-slate-300 rounded-lg text-sm cxc-monto font-semibold" required>
                 </div>
                 <button type="button" onclick="this.parentElement.remove(); ${containerId === 'editCxcContainer' ? 'calcularTotalesEdit()' : 'calcularTotales()'};" class="text-rose-500 hover:text-rose-700 p-2"><i class="fa-solid fa-trash-can"></i></button>
             `;
@@ -925,17 +2411,16 @@
             if (containerId === 'editCxcContainer') calcularTotalesEdit(); else calcularTotales();
         }
 
-        // Agregar fila dinámica Egresos por Compras
         function addEgresoRow(containerId, proveedor = '', factura = '', monto = 0) {
             const container = document.getElementById(containerId);
             const row = document.createElement('div');
             row.className = 'flex items-center space-x-2 egreso-row';
             row.innerHTML = `
                 <input type="text" placeholder="Nombre del Proveedor" value="${proveedor}" class="w-1/2 border border-slate-300 rounded-lg p-2 text-sm egreso-proveedor" required>
-                <input type="text" placeholder="N° de Factura" value="${factura}" class="w-1/4 border border-slate-300 rounded-lg p-2 text-sm egreso-factura" required>
+                <input type="text" placeholder="N° Factura" value="${factura}" class="w-1/4 border border-slate-300 rounded-lg p-2 text-sm egreso-factura" required>
                 <div class="relative w-1/4">
                     <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400 text-sm">$</span>
-                    <input type="number" step="0.01" placeholder="0.00" value="${monto || ''}" oninput="${containerId === 'editEgresoContainer' ? 'calcularTotalesEdit()' : 'calcularTotales()'}" class="w-full pl-6 pr-2 py-2 border border-slate-300 rounded-lg text-sm egreso-monto" required>
+                    <input type="number" step="0.01" placeholder="0.00" value="${monto || ''}" oninput="${containerId === 'editEgresoContainer' ? 'calcularTotalesEdit()' : 'calcularTotales()'}" class="w-full pl-6 pr-2 py-2 border border-slate-300 rounded-lg text-sm egreso-monto font-semibold" required>
                 </div>
                 <button type="button" onclick="this.parentElement.remove(); ${containerId === 'editEgresoContainer' ? 'calcularTotalesEdit()' : 'calcularTotales()'};" class="text-rose-500 hover:text-rose-700 p-2"><i class="fa-solid fa-trash-can"></i></button>
             `;
@@ -943,7 +2428,7 @@
             if (containerId === 'editEgresoContainer') calcularTotalesEdit(); else calcularTotales();
         }
 
-        // Cálculo Totales Formulario Principal
+        // Totales Formulario Principal
         function calcularTotales() {
             const vc = parseFloat(document.getElementById('ventaConsumidor').value) || 0;
             const vco = parseFloat(document.getElementById('ventaContribuyentes').value) || 0;
@@ -955,8 +2440,6 @@
             const ct = parseFloat(document.getElementById('cobrosTarjetas').value) || 0;
             const ctr = parseFloat(document.getElementById('cobrosTransferencias').value) || 0;
             const rp = parseFloat(document.getElementById('retirosParciales').value) || 0;
-            
-            // NUEVO: Calculamos y mostramos el total de egresos base
             const totalEgresosBase = ct + ctr + rp;
             if (document.getElementById('totalEgresosBaseLbl')) {
                 document.getElementById('totalEgresosBaseLbl').textContent = `$${totalEgresosBase.toFixed(2)}`;
@@ -970,8 +2453,7 @@
             document.querySelectorAll('#inputTab .cxc-monto').forEach(input => { totalCxc += parseFloat(input.value) || 0; });
             document.getElementById('totalCxcLbl').textContent = `$${totalCxc.toFixed(2)}`;
 
-            // NUEVO: Sumamos el totalCxc al total de egresos general
-            const totalEgresosGeneral = ct + ctr + rp + totalEgresosEfectivo + totalCxc;
+            const totalEgresosGeneral = totalEgresosBase + totalEgresosEfectivo + totalCxc;
             document.getElementById('totalEgresosGeneralLbl').textContent = `$${totalEgresosGeneral.toFixed(2)}`;
 
             const neto = totalIngresos - totalEgresosGeneral;
@@ -996,7 +2478,7 @@
             }
         }
 
-        // Cálculo Totales Formulario Edición
+        // Totales Formulario Edición
         function calcularTotalesEdit() {
             const vc = parseFloat(document.getElementById('editVentaConsumidor').value) || 0;
             const vco = parseFloat(document.getElementById('editVentaContribuyentes').value) || 0;
@@ -1008,8 +2490,6 @@
             const ct = parseFloat(document.getElementById('editCobrosTarjetas').value) || 0;
             const ctr = parseFloat(document.getElementById('editCobrosTransferencias').value) || 0;
             const rp = parseFloat(document.getElementById('editRetirosParciales').value) || 0;
-
-            // NUEVO: Calculamos y mostramos el total de egresos base en edición
             const totalEgresosBase = ct + ctr + rp;
             if (document.getElementById('editTotalEgresosBaseLbl')) {
                 document.getElementById('editTotalEgresosBaseLbl').textContent = `$${totalEgresosBase.toFixed(2)}`;
@@ -1023,8 +2503,7 @@
             document.querySelectorAll('#editCorteForm .cxc-monto').forEach(input => { totalCxc += parseFloat(input.value) || 0; });
             document.getElementById('editTotalCxcLbl').textContent = `$${totalCxc.toFixed(2)}`;
 
-            // NUEVO: Sumamos el totalCxc al total de egresos general
-            const totalEgresosGeneral = ct + ctr + rp + totalEgresosEfectivo + totalCxc;
+            const totalEgresosGeneral = totalEgresosBase + totalEgresosEfectivo + totalCxc;
             document.getElementById('editTotalEgresosGeneralLbl').textContent = `$${totalEgresosGeneral.toFixed(2)}`;
 
             const neto = totalIngresos - totalEgresosGeneral;
@@ -1046,181 +2525,6 @@
             } else {
                 sobranteLbl.textContent = `$0.00`;
                 faltanteLbl.textContent = `$0.00`;
-            }
-        }
-
-        // Cargar KPIs desde Backend
-        async function loadKPIs() {
-            const container = document.getElementById('kpiContainer');
-            const fecha = document.getElementById('kpiDateFilter').value;
-            const scriptUrl = localStorage.getItem('gas_script_url');
-
-            container.innerHTML = `<div class="col-span-full text-center py-8 text-slate-500 font-semibold"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Cargando KPIs desde Google Sheets...</div>`;
-
-            if (!scriptUrl) {
-                container.innerHTML = `<div class="col-span-full text-center py-8 text-amber-600 font-semibold">URL de Google Apps Script no configurada. Haga clic en 'Configurar URL Web App'.</div>`;
-                return;
-            }
-
-            try {
-                const ts = Date.now();
-                const response = await fetch(`${scriptUrl}?action=getKPIs&fecha=${encodeURIComponent(fecha)}&_t=${ts}`, {
-                    method: 'GET',
-                    redirect: 'follow'
-                });
-                const result = await response.json();
-
-                if (result.success && result.data) {
-                    container.innerHTML = '';
-                    SUCURSALES.forEach(suc => {
-                        const data = result.data[suc] || { ingresos: 0, egresos: 0, neto: 0 };
-                        const card = document.createElement('div');
-                        card.className = "bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4 hover:shadow-md transition";
-                        card.innerHTML = `
-                            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-                                <h3 class="font-bold text-slate-900 text-base">${suc}</h3>
-                                <span class="text-xs bg-slate-100 text-slate-600 font-medium px-2.5 py-1 rounded-md"><i class="fa-regular fa-calendar mr-1"></i>${fecha}</span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <span class="block text-xs font-semibold text-slate-500">Ingresos</span>
-                                    <span class="text-lg font-bold text-emerald-600">$${(Number(data.ingresos) || 0).toFixed(2)}</span>
-                                </div>
-                                <div>
-                                    <span class="block text-xs font-semibold text-slate-500">Egresos</span>
-                                    <span class="text-lg font-bold text-rose-600">$${(Number(data.egresos) || 0).toFixed(2)}</span>
-                                </div>
-                            </div>
-                            <div class="bg-slate-50 p-3 rounded-lg flex justify-between items-center border border-slate-100">
-                                <span class="text-xs font-bold text-slate-700">NETO (Ing. - Egr.):</span>
-                                <span class="text-base font-extrabold ${Number(data.neto) >= 0 ? 'text-brand-700' : 'text-rose-600'}">$${(Number(data.neto) || 0).toFixed(2)}</span>
-                            </div>
-                        `;
-                        container.appendChild(card);
-                    });
-                } else {
-                    container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error al obtener datos: ${result.message || 'Error desconocido'}</div>`;
-                }
-            } catch (err) {
-                console.error(err);
-                container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error de conexión con Google Apps Script. Verifique su implementación.</div>`;
-            }
-        }
-
-        // Cargar Reporte de Ventas por Período
-        async function cargarReporteVentas() {
-            const container = document.getElementById('ventasSucursalesContainer');
-            const scriptUrl = localStorage.getItem('gas_script_url');
-            const tipo = document.getElementById('tipoPeriodoVentas').value;
-            const fecha = document.getElementById('filtroVentasFecha').value;
-            const mes = document.getElementById('filtroVentasMes').value;
-            const anio = document.getElementById('filtroVentasAnio').value;
-
-            container.innerHTML = `<div class="col-span-full text-center py-8 text-slate-500 font-semibold"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Calculando reporte de ventas...</div>`;
-
-            if (!scriptUrl) {
-                container.innerHTML = `<div class="col-span-full text-center py-8 text-amber-600 font-semibold">URL de Google Apps Script no configurada.</div>`;
-                return;
-            }
-
-            try {
-                const ts = Date.now();
-                const url = `${scriptUrl}?action=getVentasPeriodo&tipo=${encodeURIComponent(tipo)}&fecha=${encodeURIComponent(fecha)}&mes=${encodeURIComponent(mes)}&anio=${encodeURIComponent(anio)}&_t=${ts}`;
-                const response = await fetch(url, {
-                    method: 'GET',
-                    redirect: 'follow'
-                });
-                const result = await response.json();
-
-                if (result.success && result.data) {
-                    document.getElementById('rangoCalculadoInfo').textContent = `Período actual seleccionado: ${result.rangoTexto}`;
-
-                    let totalGeneral = 0;
-                    let maxVenta = -1;
-                    let topSucursal = 'N/D';
-
-                    container.innerHTML = '';
-                    SUCURSALES.forEach(suc => {
-                        const venta = Number(result.data[suc]) || 0;
-                        totalGeneral += venta;
-                        if (venta > maxVenta && venta > 0) {
-                            maxVenta = venta;
-                            topSucursal = suc;
-                        }
-
-                        const card = document.createElement('div');
-                        card.className = "bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-3 hover:shadow-md transition flex justify-between items-center";
-                        card.innerHTML = `
-                            <div>
-                                <h3 class="font-bold text-slate-800 text-sm">${suc}</h3>
-                                <span class="text-xs text-slate-500">Ventas Totales</span>
-                            </div>
-                            <span class="text-xl font-extrabold text-brand-700">$${venta.toFixed(2)}</span>
-                        `;
-                        container.appendChild(card);
-                    });
-
-                    document.getElementById('ventasTotalesPeriodoLbl').textContent = `$${totalGeneral.toFixed(2)}`;
-                    document.getElementById('sucursalTopVentasLbl').textContent = topSucursal;
-
-                } else {
-                    container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error al obtener ventas: ${result.message || 'Error'}</div>`;
-                }
-            } catch (err) {
-                console.error(err);
-                container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error de comunicación con Google Apps Script.</div>`;
-            }
-        }
-
-        // Buscar Cortes en la Hoja HISTORICO_CORTES
-        async function buscarCortes() {
-            const tbody = document.getElementById('tablaResultadosCortes');
-            const sucursal = document.getElementById('searchSucursal').value;
-            const fecha = document.getElementById('searchFecha').value;
-            const scriptUrl = localStorage.getItem('gas_script_url');
-
-            tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500 font-semibold"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Buscando cortes...</td></tr>`;
-
-            if (!scriptUrl) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-amber-600 font-semibold">URL de Google Apps Script no configurada.</td></tr>`;
-                return;
-            }
-
-            try {
-                const ts = Date.now();
-                const url = `${scriptUrl}?action=buscarCortes&sucursal=${encodeURIComponent(sucursal)}&fecha=${encodeURIComponent(fecha)}&_t=${ts}`;
-                const response = await fetch(url, {
-                    method: 'GET',
-                    redirect: 'follow'
-                });
-                const result = await response.json();
-
-                if (result.success && result.data && result.data.length > 0) {
-                    tbody.innerHTML = '';
-                    result.data.forEach(item => {
-                        const tr = document.createElement('tr');
-                        tr.className = "hover:bg-slate-50 transition";
-                        tr.innerHTML = `
-                            <td class="p-3 font-medium text-slate-800">${item.fecha}</td>
-                            <td class="p-3 text-slate-700">${item.sucursal}</td>
-                            <td class="p-3 text-slate-600">${item.nombreCajera || 'N/D'}</td>
-                            <td class="p-3 text-right text-emerald-600 font-semibold">$${Number(item.totalIngresos).toFixed(2)}</td>
-                            <td class="p-3 text-right text-rose-600 font-semibold">$${Number(item.totalEgresos).toFixed(2)}</td>
-                            <td class="p-3 text-right font-bold ${Number(item.neto) >= 0 ? 'text-brand-700' : 'text-rose-600'}">$${Number(item.neto).toFixed(2)}</td>
-                            <td class="p-3 text-center">
-                                <button onclick="prepararEdicionDirecta('${item.sucursal}', '${item.fecha}')" class="bg-brand-50 hover:bg-brand-100 text-brand-700 px-2.5 py-1 rounded text-xs font-semibold border border-brand-200 transition">
-                                    <i class="fa-solid fa-pen-to-square mr-1"></i> Editar
-                                </button>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                } else {
-                    tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 font-medium">No se encontraron registros de cortes con los filtros seleccionados.</td></tr>`;
-                }
-            } catch (err) {
-                console.error(err);
-                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-rose-600 font-semibold">Error al conectar con Google Apps Script.</td></tr>`;
             }
         }
 
@@ -1275,7 +2579,6 @@
                     document.getElementById('editNombreCajera').value = d.nombreCajera || '';
                     document.getElementById('editNombreEncargada').value = d.nombreEncargada || '';
 
-                    // Limpiar contenedores dinámicos
                     document.getElementById('editCxcContainer').innerHTML = '';
                     if (d.cxcClientes && d.cxcClientes.length > 0) {
                         d.cxcClientes.forEach(c => addCxcRow('editCxcContainer', c.cliente, c.factura, c.monto));
@@ -1327,9 +2630,13 @@
                 });
             });
 
+            const sucursalVal = (usuarioActual && usuarioActual.rol === 'sucursal')
+                ? usuarioActual.sucursal
+                : document.getElementById('sucursal').value;
+
             const payload = {
                 action: 'guardarCorte',
-                sucursal: document.getElementById('sucursal').value,
+                sucursal: sucursalVal,
                 fecha: document.getElementById('fecha').value,
                 saldoInicial: document.getElementById('saldoInicial').value,
                 ventaConsumidor: document.getElementById('ventaConsumidor').value,
@@ -1363,20 +2670,20 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    alert('¡Corte de caja guardado exitosamente!');
+                    alert('¡Corte de caja guardado exitosamente en Google Sheets!');
                     loadKPIs();
+                    cargarCalendarioCortes();
                     cargarReporteVentas();
 
-                    // NUEVO: Limpiar el formulario y prepararlo para otro corte
                     document.getElementById('corteForm').reset();
-                    // Restaurar la fecha actual
                     document.getElementById('fecha').value = obtenerFechaLocal();
-                    // Limpiar y resetear las filas de clientes y egresos
+                    if (usuarioActual && usuarioActual.rol === 'sucursal') {
+                        document.getElementById('sucursal').value = usuarioActual.sucursal;
+                    }
                     document.getElementById('cxcContainer').innerHTML = '';
                     document.getElementById('egresoContainer').innerHTML = '';
                     addCxcRow('cxcContainer');
                     addEgresoRow('egresoContainer');
-                    // Reiniciar los totales a cero
                     calcularTotales();
                 } else {
                     alert('Error al guardar: ' + result.message);
@@ -1419,9 +2726,13 @@
                 });
             });
 
+            const sucursalVal = (usuarioActual && usuarioActual.rol === 'sucursal')
+                ? usuarioActual.sucursal
+                : document.getElementById('editLoadSucursal').value;
+
             const payload = {
                 action: 'actualizarCorte',
-                sucursal: document.getElementById('editLoadSucursal').value,
+                sucursal: sucursalVal,
                 fecha: document.getElementById('editLoadFecha').value,
                 saldoInicial: document.getElementById('editSaldoInicial').value,
                 ventaConsumidor: document.getElementById('editVentaConsumidor').value,
@@ -1457,6 +2768,7 @@
                 if (result.success) {
                     alert('¡Corte de caja actualizado exitosamente!');
                     loadKPIs();
+                    cargarCalendarioCortes();
                     cargarReporteVentas();
                 } else {
                     alert('Error al actualizar: ' + result.message);
@@ -1468,6 +2780,21 @@
                 btn.disabled = false;
                 btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> <span>Actualizar Corte de Caja en Google Sheets</span>`;
             }
+        }
+
+        // =========================================================
+        // 9. CONFIGURACIÓN MODAL GAS URL
+        // =========================================================
+        function openConfigModal() { document.getElementById('configModal').classList.remove('hidden'); }
+        function closeConfigModal() { document.getElementById('configModal').classList.add('hidden'); }
+        function saveScriptUrl() {
+            const url = document.getElementById('scriptUrlInput').value.trim();
+            localStorage.setItem('gas_script_url', url);
+            closeConfigModal();
+            alert('¡URL de Google Apps Script guardada exitosamente!');
+            loadKPIs();
+            cargarCalendarioCortes();
+            cargarReporteVentas();
         }
     </script>
 </body>
