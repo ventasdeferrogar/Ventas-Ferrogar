@@ -1416,6 +1416,13 @@
                 sucursal: 'CONSTRUGAR AGUILA',
                 nombre: 'Construgar Águila'
             },
+            'águila': {
+                usuario: 'Aguila',
+                contrasena: 'Construgaraguila1',
+                rol: 'sucursal',
+                sucursal: 'CONSTRUGAR AGUILA',
+                nombre: 'Construgar Águila'
+            },
             'autopista': {
                 usuario: 'Autopista',
                 contrasena: 'AutopistaConstrugar',
@@ -1440,6 +1447,7 @@
             'viñedo': {
                 usuario: 'Viñedo',
                 contrasena: 'Ferrogarviñedo',
+                contrasenaAlt: 'Ferrogarvinedo',
                 rol: 'sucursal',
                 sucursal: 'FG VIÑEDO',
                 nombre: 'FG Viñedo'
@@ -1447,6 +1455,7 @@
             'vinedo': {
                 usuario: 'Viñedo',
                 contrasena: 'Ferrogarviñedo',
+                contrasenaAlt: 'Ferrogarvinedo',
                 rol: 'sucursal',
                 sucursal: 'FG VIÑEDO',
                 nombre: 'FG Viñedo'
@@ -1516,7 +1525,8 @@
 
         function limpiarClaveUsuario(str) {
             if (!str) return '';
-            return str.trim().toLowerCase();
+            return str.trim().toLowerCase()
+                      .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         }
 
         // Manejador del Login
@@ -1526,10 +1536,16 @@
             const passInput = document.getElementById('loginPass').value.trim();
             const errorDiv = document.getElementById('loginError');
 
-            const key = limpiarClaveUsuario(userInput);
-            const userConfig = USUARIOS_SISTEMA[key];
+            const keyClean = limpiarClaveUsuario(userInput);
+            const keyRaw = userInput.toLowerCase();
+            const userConfig = USUARIOS_SISTEMA[keyClean] || USUARIOS_SISTEMA[keyRaw];
 
-            if (userConfig && userConfig.contrasena === passInput) {
+            const passValido = userConfig && (
+                userConfig.contrasena === passInput || 
+                (userConfig.contrasenaAlt && userConfig.contrasenaAlt === passInput)
+            );
+
+            if (userConfig && passValido) {
                 usuarioActual = {
                     usuario: userConfig.usuario,
                     rol: userConfig.rol,
@@ -2283,11 +2299,6 @@
                 const calPorcentajeLbl = document.getElementById('calPorcentajeLbl');
                 calPorcentajeLbl.textContent = `${porcentaje}%`;
                 calPorcentajeLbl.className = `text-2xl font-extrabold ${porcentaje >= 80 ? 'text-emerald-400' : (porcentaje >= 50 ? 'text-amber-400' : 'text-rose-400')}`;
-
-            } catch (err) {
-                console.error(err);
-                grid.innerHTML = `<div class="col-span-7 text-center py-8 text-rose-600 font-semibold">Error al conectar con Google Sheets para el calendario.</div>`;
-            }
         }
 
         function abrirCalDetalleModal(fecha, cortesDelDia) {
