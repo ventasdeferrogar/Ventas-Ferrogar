@@ -40,10 +40,11 @@
             body * {
                 visibility: hidden !important;
             }
-            #hojaCorteDocumento, #hojaCorteDocumento * {
+            #hojaCorteDocumento, #hojaCorteDocumento *,
+            #hojaRetirosDocumento, #hojaRetirosDocumento * {
                 visibility: visible !important;
             }
-            #hojaCorteDocumento {
+            #hojaCorteDocumento, #hojaRetirosDocumento {
                 position: absolute !important;
                 left: 0 !important;
                 top: 0 !important;
@@ -191,26 +192,26 @@
     <!-- Main Content Container -->
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6 md:py-8">
 
-        <!-- ================= TAB 1: KPI SUCURSALES ================= -->
+        <!-- ================= TAB 1: KPI SUCURSALES (CON RETIROS DESPLEGABLE COMO HOJA) ================= -->
         <div id="kpiTab" class="space-y-6">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200 gap-4">
                 <div>
                     <h2 id="kpiTituloPrincipal" class="text-xl font-bold text-slate-900">Resumen Ejecutivo por Sucursal</h2>
-                    <p id="kpiSubtituloPrincipal" class="text-sm text-slate-500">Visualización en tiempo real de ingresos, egresos, neto y último retiro registrado en el corte de caja.</p>
+                    <p id="kpiSubtituloPrincipal" class="text-sm text-slate-500">Visualización en tiempo real de ingresos, egresos, neto, último retiro y control de retiros del día.</p>
                 </div>
                 <div class="flex items-center space-x-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">Filtrar por Fecha:</label>
-                        <input type="date" id="kpiDateFilter" onchange="loadKPIs()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <input type="date" id="kpiDateFilter" onchange="loadKPIs(true)" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                     </div>
-                    <button onclick="loadKPIs()" class="mt-5 bg-brand-600 hover:bg-brand-700 text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition shadow flex items-center space-x-1">
+                    <button onclick="loadKPIs(true)" class="mt-5 bg-brand-600 hover:bg-brand-700 text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition shadow flex items-center space-x-1">
                         <i class="fa-solid fa-rotate"></i> <span>Actualizar</span>
                     </button>
                 </div>
             </div>
 
             <!-- Resumen Consolidado General (Solo para Administrador) -->
-            <div id="kpiAdminSummary" class="grid grid-cols-1 md:grid-cols-4 gap-4 hidden">
+            <div id="kpiAdminSummary" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 hidden">
                 <div class="bg-slate-900 text-white p-4 rounded-xl shadow border border-slate-800">
                     <span class="block text-xs text-slate-400 font-semibold uppercase">Total Ingresos Grupo</span>
                     <span id="adminTotalIngresos" class="text-xl font-extrabold text-emerald-400">$0.00</span>
@@ -223,9 +224,20 @@
                     <span class="block text-xs text-slate-400 font-semibold uppercase">Neto Consolidado</span>
                     <span id="adminTotalNeto" class="text-xl font-extrabold text-emerald-300">$0.00</span>
                 </div>
-                <div class="bg-amber-950 text-white p-4 rounded-xl shadow border border-amber-900">
-                    <span class="block text-xs text-amber-300 font-semibold uppercase">Total Últimos Retiros</span>
+                <div class="bg-slate-900 text-white p-4 rounded-xl shadow border border-slate-800">
+                    <span class="block text-xs text-slate-400 font-semibold uppercase">Total Últimos Retiros</span>
                     <span id="adminTotalUltimoRetiro" class="text-xl font-extrabold text-amber-300">$0.00</span>
+                </div>
+                <!-- TOTAL RETIROS CONSOLIDADOS DEL GRUPO (CLICK PARA VER HOJA) -->
+                <div class="bg-amber-950 text-white p-4 rounded-xl shadow border border-amber-900 cursor-pointer hover:bg-amber-900 transition flex flex-col justify-between" onclick="abrirHojaRetirosConsolidada()" title="Haga clic para ver el reporte de retiros de todas las sucursales">
+                    <div>
+                        <span class="block text-xs text-amber-300 font-bold uppercase flex items-center justify-between">
+                            <span>Total Retiros Grupo</span>
+                            <i class="fa-solid fa-hand-holding-dollar text-sm"></i>
+                        </span>
+                        <span id="adminTotalRetiros" class="text-xl font-black text-amber-300">$0.00</span>
+                    </div>
+                    <span class="text-[10px] text-amber-200 underline mt-1 block font-semibold"><i class="fa-solid fa-file-invoice mr-1"></i> Tocar para ver hoja</span>
                 </div>
             </div>
 
@@ -251,11 +263,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Seleccionar Mes y Año:</label>
-                        <input type="month" id="calMesInput" onchange="cargarCalendarioCortes()" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white font-medium">
+                        <input type="month" id="calMesInput" onchange="cargarCalendarioCortes(true)" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white font-medium">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Sucursal a Evaluar:</label>
-                        <select id="calSucursalSelect" onchange="cargarCalendarioCortes()" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white font-medium">
+                        <select id="calSucursalSelect" onchange="cargarCalendarioCortes(true)" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white font-medium">
                             <option value="TODAS">-- Todas las Sucursales (Consolidado) --</option>
                             <option value="FG MATRIZ">FG MATRIZ</option>
                             <option value="FG HIERROGAR">FG HIERROGAR</option>
@@ -266,7 +278,7 @@
                         </select>
                     </div>
                     <div class="flex items-end">
-                        <button onclick="cargarCalendarioCortes()" class="w-full bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shadow flex items-center justify-center space-x-2">
+                        <button onclick="cargarCalendarioCortes(true)" class="w-full bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shadow flex items-center justify-center space-x-2">
                             <i class="fa-solid fa-arrows-rotate"></i> <span>Actualizar Calendario</span>
                         </button>
                     </div>
@@ -339,7 +351,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Período:</label>
-                        <select id="tipoPeriodoVentas" onchange="toggleFiltroPeriodo()" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white font-medium">
+                        <select id="tipoPeriodoVentas" onchange="toggleFiltroPeriodo(); cargarReporteVentas(true);" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white font-medium">
                             <option value="semana">Semana (Lunes a Domingo)</option>
                             <option value="mes">Mes</option>
                             <option value="anio">Año</option>
@@ -347,20 +359,20 @@
                     </div>
                     <div id="wrapperFiltroFecha">
                         <label id="labelFechaFiltro" class="block text-xs font-semibold text-slate-600 mb-1">Seleccionar Fecha (Semana / Día):</label>
-                        <input type="date" id="filtroVentasFecha" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                        <input type="date" id="filtroVentasFecha" onchange="cargarReporteVentas(true)" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
                     </div>
                     <div id="wrapperFiltroMes" class="hidden">
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Seleccionar Mes:</label>
-                        <input type="month" id="filtroVentasMes" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                        <input type="month" id="filtroVentasMes" onchange="cargarReporteVentas(true)" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
                     </div>
                     <div id="wrapperFiltroAnio" class="hidden">
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Seleccionar Año:</label>
-                        <select id="filtroVentasAnio" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
+                        <select id="filtroVentasAnio" onchange="cargarReporteVentas(true)" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
                             <!-- Años dinámicos -->
                         </select>
                     </div>
                     <div class="flex items-end">
-                        <button onclick="cargarReporteVentas()" class="w-full bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shadow flex items-center justify-center space-x-2">
+                        <button onclick="cargarReporteVentas(true)" class="w-full bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shadow flex items-center justify-center space-x-2">
                             <i class="fa-solid fa-magnifying-glass-chart"></i> <span>Consultar Ventas</span>
                         </button>
                     </div>
@@ -398,7 +410,7 @@
             </div>
         </div>
 
-        <!-- ================= TAB 3: INGRESO DE CORTE DIARIO ================= -->
+        <!-- ================= TAB 3: INGRESO DE CORTE DIARIO (CON CONTROL DE RETIROS) ================= -->
         <div id="inputTab" class="hidden space-y-6">
             <form id="corteForm" onsubmit="submitCorte(event)" onkeydown="return event.key != 'Enter';" class="bg-white shadow-sm rounded-xl border border-slate-200 p-6 md:p-8 space-y-8">
                 
@@ -553,6 +565,36 @@
                     </div>
                 </div>
 
+                <!-- ================= NUEVA SECCIÓN DINÁMICA: CONTROL DE RETIROS (INDEPENDIENTE DEL CORTE) ================= -->
+                <div class="space-y-3 bg-amber-50/70 p-4 md:p-5 rounded-xl border-2 border-amber-300 shadow-sm">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div>
+                            <h4 class="text-sm font-extrabold text-amber-950 flex items-center">
+                                <i class="fa-solid fa-hand-holding-dollar mr-2 text-amber-600 text-base"></i> CONTROL DE RETIROS
+                                <span class="ml-2 text-[10px] bg-amber-200 text-amber-900 font-black px-2 py-0.5 rounded-full uppercase">Reporte para KPIs</span>
+                            </h4>
+                            <p class="text-xs text-amber-800 mt-0.5">Ingrese el nombre de la persona que retiró y el monto. Puede agregar múltiples retiros. <strong class="text-amber-900">No altera el cuadre contable del corte.</strong></p>
+                        </div>
+                        <button type="button" onclick="addRetiroRow('retirosContainer')" class="bg-amber-600 hover:bg-amber-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1 shadow">
+                            <i class="fa-solid fa-plus"></i> <span>Agregar Retiro</span>
+                        </button>
+                    </div>
+                    
+                    <div id="retirosContainer" class="space-y-2 pt-1">
+                        <!-- Filas dinámicas de retiros -->
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-3 border-t border-amber-200 gap-2">
+                        <span class="text-[11px] text-amber-800 font-medium italic">
+                            <i class="fa-solid fa-circle-check text-amber-600 mr-1"></i> Este dato se acumula de forma independiente y se mostrará en los KPIs de cada sucursal para desplegarse como una hoja oficial de retiros.
+                        </span>
+                        <div class="flex items-center bg-white px-3 py-1.5 rounded-lg border border-amber-200 shadow-sm">
+                            <span class="text-xs font-black text-amber-950 mr-3 uppercase">TOTAL RETIROS:</span>
+                            <span id="totalRetirosLbl" class="text-base font-black text-amber-800">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- RESUMEN FINAL Y CUADRE -->
                 <div class="bg-slate-900 text-white p-6 rounded-xl space-y-4 shadow-lg">
                     <h3 class="text-base font-bold text-emerald-400 border-b border-slate-800 pb-2">CUADRE Y RESUMEN DE CAJA</h3>
@@ -566,7 +608,7 @@
                             <span id="ingresosMenosEgresosLbl" class="text-xl font-bold text-emerald-400">$0.00</span>
                         </div>
                         <div>
-                            <label class="block text-xs text-amber-300 font-bold mb-1"><i class="fa-solid fa-hand-holding-dollar mr-1"></i> ÚLTIMO RETIRO</label>
+                            <label class="block text-xs text-amber-300 font-bold mb-1"><i class="fa-solid fa-money-bill-transfer mr-1"></i> ÚLTIMO RETIRO (CUADRE)</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
                                 <input type="number" step="0.01" id="ultimoRetiro" placeholder="0.00" oninput="calcularTotales()" class="w-full pl-8 pr-4 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none font-bold text-amber-300">
@@ -628,7 +670,7 @@
             </form>
         </div>
 
-        <!-- ================= TAB 4: BUSCAR / VISUALIZAR CORTES (COMO EN HOJA + DESCARGAS) ================= -->
+        <!-- ================= TAB 4: BUSCAR / VISUALIZAR CORTES ================= -->
         <div id="searchTab" class="hidden space-y-6">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
@@ -656,7 +698,7 @@
                         <input type="date" id="searchFecha" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white">
                     </div>
                     <div class="flex items-end">
-                        <button onclick="buscarCortes()" class="w-full bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shadow flex items-center justify-center space-x-2">
+                        <button onclick="buscarCortes(true)" class="w-full bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shadow flex items-center justify-center space-x-2">
                             <i class="fa-solid fa-filter"></i> <span>Buscar Registros</span>
                         </button>
                     </div>
@@ -860,6 +902,23 @@
                     </div>
                 </div>
 
+                <!-- SECCIÓN DINÁMICA EDIT: CONTROL DE RETIROS (INDEPENDIENTE) -->
+                <div class="space-y-3 bg-amber-50/70 p-4 rounded-xl border-2 border-amber-300">
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-sm font-bold text-amber-950 flex items-center">
+                            <i class="fa-solid fa-hand-holding-dollar mr-1.5 text-amber-600"></i> CONTROL DE RETIROS
+                        </h4>
+                        <button type="button" onclick="addRetiroRow('editRetirosContainer')" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1 shadow">
+                            <i class="fa-solid fa-plus"></i> <span>Agregar Retiro</span>
+                        </button>
+                    </div>
+                    <div id="editRetirosContainer" class="space-y-2"></div>
+                    <div class="flex justify-end pt-2 border-t border-amber-200">
+                        <span class="text-xs font-bold text-amber-950 mr-4">TOTAL RETIROS:</span>
+                        <span id="editTotalRetirosLbl" class="text-sm font-bold text-amber-900">$0.00</span>
+                    </div>
+                </div>
+
                 <!-- RESUMEN FINAL EDIT -->
                 <div class="bg-slate-900 text-white p-6 rounded-xl space-y-4 shadow-lg">
                     <h3 class="text-base font-bold text-emerald-400 border-b border-slate-800 pb-2">CUADRE Y RESUMEN DE CAJA</h3>
@@ -873,7 +932,7 @@
                             <span id="editIngresosMenosEgresosLbl" class="text-xl font-bold text-emerald-400">$0.00</span>
                         </div>
                         <div>
-                            <label class="block text-xs text-amber-300 font-bold mb-1"><i class="fa-solid fa-hand-holding-dollar mr-1"></i> ÚLTIMO RETIRO</label>
+                            <label class="block text-xs text-amber-300 font-bold mb-1"><i class="fa-solid fa-money-bill-transfer mr-1"></i> ÚLTIMO RETIRO (CUADRE)</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
                                 <input type="number" step="0.01" id="editUltimoRetiro" placeholder="0.00" oninput="calcularTotalesEdit()" class="w-full pl-8 pr-4 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none font-bold text-amber-300">
@@ -936,11 +995,10 @@
 
     </main>
 
-    <!-- ================= MODAL: HOJA DE CORTE COMPLETA (VISTA HOJA OFICIAL) ================= -->
+    <!-- ================= MODAL 1: HOJA DE CORTE COMPLETA (VISTA HOJA OFICIAL) ================= -->
     <div id="hojaCorteModal" class="fixed inset-0 bg-slate-900 bg-opacity-75 z-50 flex items-center justify-center p-2 sm:p-4 hidden overflow-y-auto">
         <div class="bg-white rounded-2xl max-w-4xl w-full p-4 sm:p-6 space-y-4 shadow-2xl max-h-[92vh] flex flex-col my-auto">
             
-            <!-- Barra superior del modal (Botones de acción de descarga e impresión) -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-3 gap-2 no-imprimir">
                 <div class="flex items-center space-x-2">
                     <div class="bg-brand-900 text-white p-2 rounded-lg text-base">
@@ -971,7 +1029,6 @@
             <div class="overflow-y-auto flex-grow p-1">
                 <div id="hojaCorteDocumento" class="hoja-papel p-6 sm:p-8 rounded-xl space-y-6 text-slate-800 text-sm">
                     
-                    <!-- Membrete de la Empresa -->
                     <div class="border-b-2 border-brand-900 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <div class="flex items-center space-x-3">
                             <div class="bg-brand-900 text-white p-2.5 rounded-xl text-xl font-bold">
@@ -988,7 +1045,6 @@
                         </div>
                     </div>
 
-                    <!-- Datos Generales y Responsables -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
                         <div class="space-y-1">
                             <div><strong class="text-slate-600">Cajera(o):</strong> <span id="docNombreCajera" class="font-bold text-slate-900">--</span></div>
@@ -1000,16 +1056,12 @@
                         </div>
                     </div>
 
-                    <!-- Saldo Inicial -->
                     <div class="flex justify-between items-center bg-slate-100 px-4 py-2.5 rounded-lg border border-slate-300">
                         <span class="font-bold text-slate-700 text-xs uppercase tracking-wider">SALDO INICIAL DE CAJA:</span>
                         <span id="docSaldoInicial" class="text-base font-extrabold text-slate-900">$0.00</span>
                     </div>
 
-                    <!-- Tablas de Ingresos y Egresos en Dos Columnas -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        
-                        <!-- Columna Ingresos -->
                         <div class="space-y-3">
                             <div class="bg-emerald-800 text-white px-3 py-1.5 rounded-lg font-bold text-xs uppercase flex justify-between">
                                 <span>Detalle de Ingresos</span>
@@ -1041,7 +1093,6 @@
                             </table>
                         </div>
 
-                        <!-- Columna Egresos Base -->
                         <div class="space-y-3">
                             <div class="bg-rose-800 text-white px-3 py-1.5 rounded-lg font-bold text-xs uppercase flex justify-between">
                                 <span>Detalle Egresos Base</span>
@@ -1070,7 +1121,6 @@
                         </div>
                     </div>
 
-                    <!-- Detalle Cuentas por Cobrar Clientes -->
                     <div class="space-y-2">
                         <div class="flex justify-between items-center border-b pb-1">
                             <h4 class="font-bold text-xs text-slate-800 uppercase flex items-center">
@@ -1092,7 +1142,6 @@
                         </table>
                     </div>
 
-                    <!-- Detalle Egresos por Compras / Efectivo -->
                     <div class="space-y-2">
                         <div class="flex justify-between items-center border-b pb-1">
                             <h4 class="font-bold text-xs text-slate-800 uppercase flex items-center">
@@ -1134,7 +1183,7 @@
                                 <span id="docCuadreNeto" class="text-base font-extrabold text-emerald-300">$0.00</span>
                             </div>
                             <div class="bg-amber-950 p-2.5 rounded-lg border border-amber-800">
-                                <span class="block text-[11px] text-amber-300 uppercase font-bold">Último Retiro</span>
+                                <span class="block text-[11px] text-amber-300 uppercase font-bold">Último Retiro (Cuadre)</span>
                                 <span id="docCuadreUltimoRetiro" class="text-base font-extrabold text-amber-300">$0.00</span>
                             </div>
                         </div>
@@ -1152,8 +1201,29 @@
                         </div>
                     </div>
 
+                    <!-- Desglose Informativo de Retiros Registrados en el Corte -->
+                    <div class="space-y-2 bg-amber-50/50 p-4 rounded-xl border border-amber-200">
+                        <div class="flex justify-between items-center border-b border-amber-200 pb-1">
+                            <h4 class="font-bold text-xs text-amber-950 uppercase flex items-center">
+                                <i class="fa-solid fa-hand-holding-dollar text-amber-600 mr-1.5"></i> Control de Retiros del Día
+                            </h4>
+                            <span id="docTotalRetirosHeader" class="text-xs font-black text-amber-900">Total Retirado: $0.00</span>
+                        </div>
+                        <table class="w-full text-left text-xs border border-amber-200 rounded-lg overflow-hidden bg-white">
+                            <thead class="bg-amber-100 text-amber-900 font-bold border-b border-amber-200">
+                                <tr>
+                                    <th class="p-2">Persona que Retiró</th>
+                                    <th class="p-2 text-right">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="docTablaRetiros" class="divide-y divide-amber-100">
+                                <tr><td colspan="2" class="p-2 text-center text-slate-400">Sin retiros registrados en este corte.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
                     <!-- Firmas de Responsabilidad -->
-                    <div class="grid grid-cols-2 gap-8 pt-8 text-center text-xs">
+                    <div class="grid grid-cols-2 gap-8 pt-6 text-center text-xs">
                         <div class="space-y-2">
                             <div class="border-t border-slate-400 pt-2 font-bold text-slate-800" id="docFirmaCajeraLabel">Firma Cajera(o)</div>
                             <p class="text-[11px] text-slate-500">Responsable de Caja</p>
@@ -1170,7 +1240,119 @@
         </div>
     </div>
 
-    <!-- ================= MODAL: DETALLE DEL DÍA EN EL CALENDARIO ================= -->
+    <!-- ================= MODAL 2: HOJA DESPLEGADA DE RETIROS (DESDE LOS KPIS) ================= -->
+    <div id="hojaRetirosModal" class="fixed inset-0 bg-slate-900 bg-opacity-75 z-50 flex items-center justify-center p-2 sm:p-4 hidden overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-4 sm:p-6 space-y-4 shadow-2xl max-h-[92vh] flex flex-col my-auto border border-amber-200">
+            
+            <!-- Barra superior del modal de Retiros -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-3 gap-2 no-imprimir">
+                <div class="flex items-center space-x-2">
+                    <div class="bg-amber-600 text-white p-2.5 rounded-xl text-base shadow">
+                        <i class="fa-solid fa-money-bill-transfer"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-black text-slate-900">Hoja de Control de Retiros</h3>
+                        <p class="text-xs text-slate-500">Detalle desplegado de las personas que realizaron retiros y montos.</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="descargarHojaRetirosPDF()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow flex items-center space-x-1">
+                        <i class="fa-solid fa-file-pdf"></i> <span>Descargar PDF</span>
+                    </button>
+                    <button onclick="descargarHojaRetirosExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow flex items-center space-x-1">
+                        <i class="fa-solid fa-file-excel"></i> <span>Descargar Excel</span>
+                    </button>
+                    <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow flex items-center space-x-1">
+                        <i class="fa-solid fa-print"></i> <span>Imprimir</span>
+                    </button>
+                    <button onclick="cerrarHojaRetirosModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+                        <i class="fa-solid fa-xmark"></i> <span>Cerrar</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Documento Imprimible de la Hoja de Retiros -->
+            <div class="overflow-y-auto flex-grow p-1">
+                <div id="hojaRetirosDocumento" class="hoja-papel p-6 sm:p-8 rounded-xl space-y-6 text-slate-800 text-sm">
+                    
+                    <!-- Membrete Oficial -->
+                    <div class="border-b-2 border-amber-600 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-amber-600 text-white p-2.5 rounded-xl text-xl font-bold">
+                                <i class="fa-solid fa-hand-holding-dollar"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-black text-brand-900 tracking-wide">GRUPO FERROGAR & CONSTRUGAR</h2>
+                                <p class="text-xs font-bold text-amber-800 uppercase tracking-wider">Comprobante Oficial de Control de Retiros</p>
+                            </div>
+                        </div>
+                        <div class="text-left sm:text-right text-xs">
+                            <div class="font-bold text-slate-800">Fecha: <span id="retirosDocFecha" class="text-amber-900 font-black text-sm underline">--</span></div>
+                            <div class="font-semibold text-slate-600">Sucursal: <span id="retirosDocSucursal" class="font-black text-slate-900 uppercase">--</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Resumen del Total Retirado -->
+                    <div class="bg-gradient-to-r from-amber-500 to-amber-600 text-white p-5 rounded-xl shadow flex justify-between items-center">
+                        <div>
+                            <span class="block text-xs uppercase font-extrabold text-amber-100 tracking-wider">Total Acumulado de Retiros</span>
+                            <span id="retirosDocTotalGrande" class="text-3xl font-black">$0.00</span>
+                        </div>
+                        <div class="bg-white/20 p-3 rounded-xl text-2xl">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Personas y Montos -->
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-extrabold text-xs text-slate-800 uppercase tracking-wider flex items-center">
+                                <i class="fa-solid fa-list-ol text-amber-600 mr-2"></i> Lista Detallada de Retiros Realizados
+                            </h4>
+                            <span id="retirosDocContador" class="text-xs bg-amber-100 text-amber-900 px-2.5 py-0.5 rounded-full font-bold">0 retiros</span>
+                        </div>
+
+                        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 uppercase text-[11px]">
+                                    <tr>
+                                        <th class="p-3 w-12 text-center">N°</th>
+                                        <th class="p-3">Nombre de Quien Retiró</th>
+                                        <th class="p-3 text-right">Monto Retirado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="retirosDocTablaCuerpo" class="divide-y divide-slate-100 bg-white">
+                                    <!-- Filas dinámicas -->
+                                </tbody>
+                                <tfoot class="bg-amber-50 font-black text-amber-950 text-xs border-t-2 border-amber-300">
+                                    <tr>
+                                        <td colspan="2" class="p-3 text-right uppercase">TOTAL GENERAL RETIRADO:</td>
+                                        <td id="retirosDocTotalPie" class="p-3 text-right text-sm text-amber-900">$0.00</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Firmas de Entrega y Recepción -->
+                    <div class="grid grid-cols-2 gap-8 pt-8 text-center text-xs">
+                        <div class="space-y-2">
+                            <div class="border-t border-slate-400 pt-2 font-bold text-slate-800">Firma Cajera / Entrega</div>
+                            <p class="text-[11px] text-slate-500">Responsable de Caja</p>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="border-t border-slate-400 pt-2 font-bold text-slate-800">Firma Recibido / Supervisión</div>
+                            <p class="text-[11px] text-slate-500">Persona que Retira / Autoriza</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ================= MODAL 3: DETALLE DEL DÍA EN EL CALENDARIO ================= -->
     <div id="calDetalleModal" class="fixed inset-0 bg-slate-900 bg-opacity-70 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
             <div class="flex justify-between items-center border-b pb-3">
@@ -1193,7 +1375,7 @@
         </div>
     </div>
 
-    <!-- ================= MODAL: CONFIGURACIÓN GOOGLE APPS SCRIPT URL ================= -->
+    <!-- ================= MODAL 4: CONFIGURACIÓN GOOGLE APPS SCRIPT URL ================= -->
     <div id="configModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
             <div class="flex justify-between items-center border-b pb-3">
@@ -1224,7 +1406,7 @@
                 usuario: 'Ferrogar',
                 contrasena: 'AdminFg',
                 rol: 'admin',
-                sucursal: null, // Acceso a TODO
+                sucursal: null,
                 nombre: 'Administrador General'
             },
             'aguila': {
@@ -1287,12 +1469,51 @@
             "CONSTRUGAR AGUILA"
         ];
 
-        // Estado global de la sesión
+        // Estado global de la sesión y datos
         let usuarioActual = null;
         let cortesBuscadosActuales = [];
         let corteSeleccionadoHoja = null;
+        let kpiDataCargadaActual = {};
 
-        // Función normalizadora de nombres de usuario para login tolerante a mayúsculas
+        // =========================================================
+        // MOTOR DE CACHÉ EN MEMORIA (ULTRA ALTO RENDIMIENTO)
+        // Evita peticiones repetitivas a Google Apps Script y acelera
+        // la navegación entre pestañas a 0 milisegundos.
+        // =========================================================
+        const AppCache = {
+            store: new Map(),
+            TTL: 120 * 1000, // 2 minutos de vigencia en memoria
+            get(key) {
+                const item = this.store.get(key);
+                if (!item) return null;
+                if (Date.now() - item.time > item.ttl) {
+                    this.store.delete(key);
+                    return null;
+                }
+                return item.data;
+            },
+            set(key, data, ttl = this.TTL) {
+                this.store.set(key, { data, time: Date.now(), ttl });
+            },
+            clear(prefix = '') {
+                if (!prefix) {
+                    this.store.clear();
+                } else {
+                    for (const k of this.store.keys()) {
+                        if (k.startsWith(prefix)) this.store.delete(k);
+                    }
+                }
+            }
+        };
+
+        // Datos para la hoja de retiros actual
+        let datosHojaRetirosActual = {
+            sucursal: '',
+            fecha: '',
+            retiros: [],
+            total: 0
+        };
+
         function limpiarClaveUsuario(str) {
             if (!str) return '';
             return str.trim().toLowerCase();
@@ -1324,14 +1545,11 @@
 
                 aplicarPermisosUsuario();
                 loadKPIs();
-                cargarCalendarioCortes();
-                cargarReporteVentas();
             } else {
                 errorDiv.classList.remove('hidden');
             }
         }
 
-        // Manejador de Logout
         function handleLogout() {
             localStorage.removeItem('auth_session_user');
             localStorage.removeItem('is_logged_in');
@@ -1341,7 +1559,6 @@
             document.getElementById('loginScreen').classList.remove('hidden');
         }
 
-        // Aplicación estricta de permisos según el Rol y la Sucursal
         function aplicarPermisosUsuario() {
             if (!usuarioActual) return;
 
@@ -1356,12 +1573,10 @@
                 badgeRole.className = 'px-2 py-0.5 rounded text-[10px] bg-purple-500 text-white font-extrabold uppercase shadow-sm';
                 btnConfig.classList.remove('hidden');
 
-                // Títulos e Indicadores
                 document.getElementById('kpiTituloPrincipal').textContent = 'Resumen Ejecutivo por Sucursal (Todas las Sucursales)';
-                document.getElementById('kpiSubtituloPrincipal').textContent = 'Visualización en tiempo real de ingresos, egresos, neto y último retiro registrado en todas las sucursales.';
+                document.getElementById('kpiSubtituloPrincipal').textContent = 'Visualización en tiempo real de ingresos, egresos, neto, último retiro y control de retiros en todas las sucursales.';
                 document.getElementById('kpiAdminSummary').classList.remove('hidden');
 
-                // Habilitar selección de todas las sucursales
                 habilitarSelectSucursal('sucursal', true);
                 habilitarSelectSucursal('searchSucursal', true);
                 habilitarSelectSucursal('editLoadSucursal', true);
@@ -1370,17 +1585,14 @@
                 document.getElementById('sucursalBloqueadaAviso').classList.add('hidden');
 
             } else {
-                // Usuario de Sucursal: Restricción absoluta
                 badgeRole.textContent = usuarioActual.sucursal;
                 badgeRole.className = 'px-2 py-0.5 rounded text-[10px] bg-emerald-400 text-brand-950 font-extrabold uppercase shadow-sm';
-                btnConfig.classList.add('hidden'); // Ocultar configuración GAS
+                btnConfig.classList.add('hidden');
 
-                // Títulos personalizados para sucursal
                 document.getElementById('kpiTituloPrincipal').textContent = `KPIs de ${usuarioActual.nombre}`;
                 document.getElementById('kpiSubtituloPrincipal').textContent = `Visualizando únicamente los datos y cortes correspondientes a ${usuarioActual.sucursal}.`;
                 document.getElementById('kpiAdminSummary').classList.add('hidden');
 
-                // Bloquear selectores estrictamente a la sucursal asignada
                 bloquearSelectSucursal('sucursal', usuarioActual.sucursal);
                 bloquearSelectSucursal('searchSucursal', usuarioActual.sucursal);
                 bloquearSelectSucursal('editLoadSucursal', usuarioActual.sucursal);
@@ -1390,7 +1602,6 @@
             }
         }
 
-        // Helpers para restringir o liberar selects de sucursales
         function bloquearSelectSucursal(selectId, sucursalPermitida) {
             const select = document.getElementById(selectId);
             if (!select) return;
@@ -1423,7 +1634,6 @@
             select.classList.remove('bg-slate-100', 'cursor-not-allowed');
         }
 
-        // Formato seguro de fecha local YYYY-MM-DD
         function obtenerFechaLocal() {
             const d = new Date();
             const year = d.getFullYear();
@@ -1432,7 +1642,7 @@
             return `${year}-${month}-${day}`;
         }
 
-        // Inicialización del Sistema al cargar DOM
+        // Inicialización
         document.addEventListener('DOMContentLoaded', () => {
             const today = obtenerFechaLocal();
             document.getElementById('fecha').value = today;
@@ -1443,7 +1653,6 @@
             document.getElementById('filtroVentasMes').value = today.substring(0, 7);
             document.getElementById('calMesInput').value = today.substring(0, 7);
 
-            // Poblar selector de años
             const anioSelect = document.getElementById('filtroVentasAnio');
             const currentYear = new Date().getFullYear();
             for (let y = currentYear; y >= currentYear - 5; y--) {
@@ -1462,8 +1671,8 @@
             // Filas iniciales dinámicas
             addCxcRow('cxcContainer');
             addEgresoRow('egresoContainer');
+            addRetiroRow('retirosContainer');
 
-            // Verificar si hay sesión activa previa
             const isLoggedIn = localStorage.getItem('is_logged_in');
             const savedUser = localStorage.getItem('auth_session_user');
 
@@ -1473,8 +1682,6 @@
                     document.getElementById('loginScreen').classList.add('hidden');
                     aplicarPermisosUsuario();
                     loadKPIs();
-                    cargarCalendarioCortes();
-                    cargarReporteVentas();
                 } catch (e) {
                     handleLogout();
                 }
@@ -1514,19 +1721,32 @@
                 activeBtn.classList.remove('border-transparent', 'text-slate-500', 'font-semibold');
             }
 
-            if (tabId === 'kpiTab') loadKPIs();
-            if (tabId === 'calendarioTab') cargarCalendarioCortes();
-            if (tabId === 'ventasTab') cargarReporteVentas();
-            if (tabId === 'searchTab') buscarCortes();
+            if (tabId === 'kpiTab') loadKPIs(false);
+            if (tabId === 'calendarioTab') cargarCalendarioCortes(false);
+            if (tabId === 'ventasTab') cargarReporteVentas(false);
+            if (tabId === 'searchTab') {
+                if (!cortesBuscadosActuales || cortesBuscadosActuales.length === 0) {
+                    buscarCortes(false);
+                }
+            }
         }
 
         // =========================================================
-        // 2. CARGA DE KPIS CON ÚLTIMO RETIRO Y CONTROL DE ACCESO
+        // 2. CARGA DE KPIS CON CONTROL DE RETIROS Y ACCESO DIRECTO
         // =========================================================
-        async function loadKPIs() {
+        async function loadKPIs(forceRefresh = false) {
             const container = document.getElementById('kpiContainer');
             const fecha = document.getElementById('kpiDateFilter').value;
             const scriptUrl = localStorage.getItem('gas_script_url');
+
+            const cacheKey = `kpi_${fecha}`;
+            if (!forceRefresh) {
+                const cached = AppCache.get(cacheKey);
+                if (cached) {
+                    renderizarKPIs(cached, fecha);
+                    return;
+                }
+            }
 
             container.innerHTML = `<div class="col-span-full text-center py-8 text-slate-500 font-semibold"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Cargando KPIs desde Google Sheets...</div>`;
 
@@ -1544,9 +1764,22 @@
                 const result = await response.json();
 
                 if (result.success && result.data) {
-                    container.innerHTML = '';
+                    AppCache.set(cacheKey, result.data);
+                    renderizarKPIs(result.data, fecha);
+                } else {
+                    container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error al obtener datos: ${result.message || 'Error desconocido'}</div>`;
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error de conexión con Google Apps Script.</div>`;
+            }
+        }
 
-                    // Filtrar sucursales según el rol
+        function renderizarKPIs(resultData, fecha) {
+            kpiDataCargadaActual = resultData;
+            const container = document.getElementById('kpiContainer');
+            container.innerHTML = '';
+
                     const sucursalesMostrar = (usuarioActual && usuarioActual.rol === 'sucursal')
                         ? [usuarioActual.sucursal]
                         : SUCURSALES;
@@ -1555,14 +1788,15 @@
                     let totalEgresosGrupo = 0;
                     let totalNetoGrupo = 0;
                     let totalUltimoRetiroGrupo = 0;
+                    let totalRetirosGrupo = 0;
 
-                    // Si es admin calcular totales consolidables
                     SUCURSALES.forEach(s => {
-                        const d = result.data[s] || { ingresos: 0, egresos: 0, neto: 0, ultimoRetiro: 0 };
+                        const d = resultData[s] || { ingresos: 0, egresos: 0, neto: 0, ultimoRetiro: 0, totalRetiros: 0 };
                         totalIngresosGrupo += Number(d.ingresos) || 0;
                         totalEgresosGrupo += Number(d.egresos) || 0;
                         totalNetoGrupo += Number(d.neto) || 0;
                         totalUltimoRetiroGrupo += Number(d.ultimoRetiro) || 0;
+                        totalRetirosGrupo += Number(d.totalRetiros) || 0;
                     });
 
                     if (document.getElementById('adminTotalIngresos')) {
@@ -1570,11 +1804,11 @@
                         document.getElementById('adminTotalEgresos').textContent = `$${totalEgresosGrupo.toFixed(2)}`;
                         document.getElementById('adminTotalNeto').textContent = `$${totalNetoGrupo.toFixed(2)}`;
                         document.getElementById('adminTotalUltimoRetiro').textContent = `$${totalUltimoRetiroGrupo.toFixed(2)}`;
+                        document.getElementById('adminTotalRetiros').textContent = `$${totalRetirosGrupo.toFixed(2)}`;
                     }
 
-                    // Renderizar tarjetas autorizadas
                     sucursalesMostrar.forEach(suc => {
-                        const data = result.data[suc] || { ingresos: 0, egresos: 0, neto: 0, ultimoRetiro: 0 };
+                        const data = resultData[suc] || { ingresos: 0, egresos: 0, neto: 0, ultimoRetiro: 0, totalRetiros: 0, retirosDetalle: [] };
                         const card = document.createElement('div');
                         card.className = "bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4 hover:shadow-md transition";
                         card.innerHTML = `
@@ -1602,75 +1836,317 @@
                                 <span class="text-xs font-bold text-slate-700">NETO (Ing. - Egr.):</span>
                                 <span class="text-base font-black ${Number(data.neto) >= 0 ? 'text-brand-700' : 'text-rose-600'}">$${(Number(data.neto) || 0).toFixed(2)}</span>
                             </div>
-                            <!-- ÚLTIMO RETIRO DESTACADO EN EL KPI -->
-                            <div class="bg-amber-50 p-3 rounded-lg flex justify-between items-center border border-amber-200 shadow-sm">
-                                <span class="text-xs font-extrabold text-amber-900 flex items-center">
-                                    <i class="fa-solid fa-hand-holding-dollar text-amber-600 text-sm mr-2"></i> ÚLTIMO RETIRO:
+
+                            <!-- ÚLTIMO RETIRO -->
+                            <div class="bg-slate-100 p-2.5 rounded-lg flex justify-between items-center border border-slate-200">
+                                <span class="text-xs font-bold text-slate-700 flex items-center">
+                                    <i class="fa-solid fa-money-bill-transfer text-slate-500 text-sm mr-2"></i> ÚLTIMO RETIRO:
                                 </span>
-                                <span class="text-base font-black text-amber-800">$${(Number(data.ultimoRetiro) || 0).toFixed(2)}</span>
+                                <span class="text-sm font-black text-slate-800">$${(Number(data.ultimoRetiro) || 0).toFixed(2)}</span>
+                            </div>
+
+                            <!-- OPCIÓN SOLICITADA: RETIROS DESPLEGABLE COMO HOJA AL TOCAR -->
+                            <div onclick="abrirHojaRetiros('${suc}', '${fecha}')" class="bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 p-3.5 rounded-xl border-2 border-amber-300 shadow-sm cursor-pointer transition transform hover:-translate-y-0.5 flex justify-between items-center group" title="Haga clic aquí para ver la hoja desplegada con el detalle de retiros">
+                                <div class="flex items-center space-x-2.5">
+                                    <div class="bg-amber-600 group-hover:bg-amber-700 text-white p-2 rounded-lg text-sm shadow transition">
+                                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs font-black text-amber-950 uppercase block tracking-wide">RETIROS</span>
+                                        <span class="text-[11px] text-amber-700 font-bold underline flex items-center group-hover:text-amber-900">
+                                            <i class="fa-solid fa-file-invoice mr-1"></i> Tocar para ver hoja
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-lg font-black text-amber-900 block">$${(Number(data.totalRetiros) || 0).toFixed(2)}</span>
+                                    <span class="text-[10px] text-amber-700 font-bold uppercase bg-amber-200/70 px-1.5 py-0.5 rounded">Detalle</span>
+                                </div>
                             </div>
                         `;
                         container.appendChild(card);
                     });
-
-                } else {
-                    container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error al obtener datos: ${result.message || 'Error desconocido'}</div>`;
-                }
-            } catch (err) {
-                console.error(err);
-                container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error de conexión con Google Apps Script.</div>`;
-            }
         }
 
         // =========================================================
-        // 3. CALENDARIO DE CORTES: CORTES INGRESADOS VS FALTANTES
+        // 3. HOJA DESPLEGADA DE RETIROS (MODAL TIPO DOCUMENTO OFICIAL)
         // =========================================================
-        async function cargarCalendarioCortes() {
+        async function abrirHojaRetiros(sucursal, fecha) {
+            const scriptUrl = localStorage.getItem('gas_script_url');
+            document.getElementById('hojaRetirosModal').classList.remove('hidden');
+            document.getElementById('retirosDocSucursal').textContent = sucursal;
+            document.getElementById('retirosDocFecha').textContent = fecha;
+            document.getElementById('retirosDocTotalGrande').textContent = '$0.00';
+            document.getElementById('retirosDocTotalPie').textContent = '$0.00';
+            document.getElementById('retirosDocContador').textContent = 'Cargando...';
+
+            // 1. Intentar primero obtener de la memoria local de KPIs (0 ms!)
+            if (kpiDataCargadaActual && kpiDataCargadaActual[sucursal]) {
+                const itemKpi = kpiDataCargadaActual[sucursal];
+                if (itemKpi.retirosDetalle && itemKpi.retirosDetalle.length > 0) {
+                    renderizarHojaRetirosDoc(sucursal, fecha, itemKpi.retirosDetalle, Number(itemKpi.totalRetiros) || 0);
+                    return;
+                }
+            }
+
+            // 2. Intentar obtener de AppCache si ya fue consultado
+            const cacheKey = `corte_${sucursal}_${fecha}`;
+            const cachedCorte = AppCache.get(cacheKey);
+            if (cachedCorte && cachedCorte.retirosDetalle) {
+                renderizarHojaRetirosDoc(sucursal, fecha, cachedCorte.retirosDetalle, Number(cachedCorte.totalRetiros) || 0);
+                return;
+            }
+
+            const tablaCuerpo = document.getElementById('retirosDocTablaCuerpo');
+            tablaCuerpo.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-slate-500 font-semibold"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Cargando hoja de retiros...</td></tr>`;
+
+            // 3. Consultar a Google Apps Script
+            try {
+                const ts = Date.now();
+                const response = await fetch(`${scriptUrl}?action=obtenerCorteDetalle&sucursal=${encodeURIComponent(sucursal)}&fecha=${encodeURIComponent(fecha)}&_t=${ts}`, {
+                    method: 'GET',
+                    redirect: 'follow'
+                });
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    AppCache.set(cacheKey, result.data);
+                    const retirosList = result.data.retirosDetalle || [];
+                    let total = Number(result.data.totalRetiros) || 0;
+                    if (total === 0 && retirosList.length > 0) {
+                        retirosList.forEach(r => total += Number(r.monto) || 0);
+                    }
+                    renderizarHojaRetirosDoc(sucursal, fecha, retirosList, total);
+                } else {
+                    renderizarHojaRetirosDoc(sucursal, fecha, [], 0);
+                }
+            } catch (err) {
+                console.error(err);
+                renderizarHojaRetirosDoc(sucursal, fecha, [], 0);
+            }
+        }
+
+        // Para el botón de retiros consolidados de todas las sucursales (Admin)
+        async function abrirHojaRetirosConsolidada() {
+            const fecha = document.getElementById('kpiDateFilter').value;
+            const scriptUrl = localStorage.getItem('gas_script_url');
+            document.getElementById('hojaRetirosModal').classList.remove('hidden');
+            document.getElementById('retirosDocSucursal').textContent = 'TODAS LAS SUCURSALES (CONSOLIDADO)';
+            document.getElementById('retirosDocFecha').textContent = fecha;
+            
+            // 1. Verificación instantánea desde memoria KPI (0 ms!)
+            let todosLosRetiros = [];
+            let granTotal = 0;
+            let tieneDatosKpi = false;
+
+            if (kpiDataCargadaActual) {
+                SUCURSALES.forEach(suc => {
+                    const dataSuc = kpiDataCargadaActual[suc];
+                    if (dataSuc && dataSuc.retirosDetalle && dataSuc.retirosDetalle.length > 0) {
+                        tieneDatosKpi = true;
+                        dataSuc.retirosDetalle.forEach(r => {
+                            todosLosRetiros.push({
+                                persona: `${r.persona || 'N/D'} (${suc})`,
+                                monto: Number(r.monto) || 0
+                            });
+                            granTotal += Number(r.monto) || 0;
+                        });
+                    }
+                });
+            }
+
+            if (tieneDatosKpi) {
+                renderizarHojaRetirosDoc('TODAS LAS SUCURSALES (GRUPO)', fecha, todosLosRetiros, granTotal);
+                return;
+            }
+
+            // 2. Si no están en memoria, consultar en paralelo con Promise.all (alta velocidad)
+            const tablaCuerpo = document.getElementById('retirosDocTablaCuerpo');
+            tablaCuerpo.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-slate-500 font-semibold"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Compilando retiros de todas las sucursales...</td></tr>`;
+
+            try {
+                const ts = Date.now();
+                const promesas = SUCURSALES.map(async (suc) => {
+                    const cacheKey = `corte_${suc}_${fecha}`;
+                    const cached = AppCache.get(cacheKey);
+                    if (cached && cached.retirosDetalle) return { suc, data: cached };
+
+                    try {
+                        const response = await fetch(`${scriptUrl}?action=obtenerCorteDetalle&sucursal=${encodeURIComponent(suc)}&fecha=${encodeURIComponent(fecha)}&_t=${ts}`);
+                        const res = await response.json();
+                        if (res.success && res.data) {
+                            AppCache.set(cacheKey, res.data);
+                            return { suc, data: res.data };
+                        }
+                    } catch(e) {}
+                    return { suc, data: null };
+                });
+
+                const resultados = await Promise.all(promesas);
+                resultados.forEach(item => {
+                    if (item.data && item.data.retirosDetalle) {
+                        item.data.retirosDetalle.forEach(r => {
+                            todosLosRetiros.push({
+                                persona: `${r.persona || 'N/D'} (${item.suc})`,
+                                monto: Number(r.monto) || 0
+                            });
+                            granTotal += Number(r.monto) || 0;
+                        });
+                    }
+                });
+
+                renderizarHojaRetirosDoc('TODAS LAS SUCURSALES (GRUPO)', fecha, todosLosRetiros, granTotal);
+            } catch (err) {
+                console.error(err);
+                renderizarHojaRetirosDoc('TODAS LAS SUCURSALES (GRUPO)', fecha, [], 0);
+            }
+        }
+
+        function renderizarHojaRetirosDoc(sucursal, fecha, retiros, total) {
+            datosHojaRetirosActual = { sucursal, fecha, retiros, total };
+
+            document.getElementById('retirosDocSucursal').textContent = sucursal;
+            document.getElementById('retirosDocFecha').textContent = fecha;
+            document.getElementById('retirosDocTotalGrande').textContent = `$${total.toFixed(2)}`;
+            document.getElementById('retirosDocTotalPie').textContent = `$${total.toFixed(2)}`;
+            document.getElementById('retirosDocContador').textContent = `${retiros.length} ${retiros.length === 1 ? 'retiro' : 'retiros'}`;
+
+            const tablaCuerpo = document.getElementById('retirosDocTablaCuerpo');
+            tablaCuerpo.innerHTML = '';
+
+            if (retiros.length > 0) {
+                retiros.forEach((r, idx) => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 transition";
+                    tr.innerHTML = `
+                        <td class="p-3 text-center font-bold text-slate-500">${idx + 1}</td>
+                        <td class="p-3 font-extrabold text-slate-800 text-sm">
+                            <i class="fa-solid fa-user-check text-amber-600 mr-2"></i> ${r.persona || 'No especificado'}
+                        </td>
+                        <td class="p-3 text-right font-black text-amber-900 text-sm">$${(Number(r.monto) || 0).toFixed(2)}</td>
+                    `;
+                    tablaCuerpo.appendChild(tr);
+                });
+            } else {
+                tablaCuerpo.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="p-8 text-center text-slate-400 font-medium">
+                            <i class="fa-solid fa-circle-exclamation text-2xl mb-2 block text-slate-300"></i>
+                            No se registraron retiros para esta sucursal en la fecha seleccionada.
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function cerrarHojaRetirosModal() {
+            document.getElementById('hojaRetirosModal').classList.add('hidden');
+        }
+
+        function descargarHojaRetirosPDF() {
+            const el = document.getElementById('hojaRetirosDocumento');
+            const sucursal = datosHojaRetirosActual.sucursal ? datosHojaRetirosActual.sucursal.replace(/\s+/g, '_') : 'Sucursal';
+            const fecha = datosHojaRetirosActual.fecha || obtenerFechaLocal();
+
+            const opt = {
+                margin: [8, 8, 8, 8],
+                filename: `Hoja_Retiros_${sucursal}_${fecha}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(el).save();
+        }
+
+        function descargarHojaRetirosExcel() {
+            const wb = XLSX.utils.book_new();
+            const rows = [
+                ["GRUPO FERROGAR & CONSTRUGAR"],
+                ["COMPROBANTE OFICIAL DE CONTROL DE RETIROS DE CAJA"],
+                [],
+                ["Sucursal:", datosHojaRetirosActual.sucursal, "Fecha:", datosHojaRetirosActual.fecha],
+                ["Total Retirado:", Number(datosHojaRetirosActual.total || 0)],
+                [],
+                ["N°", "Nombre de Quien Retiró", "Monto ($)"]
+            ];
+
+            if (datosHojaRetirosActual.retiros && datosHojaRetirosActual.retiros.length > 0) {
+                datosHojaRetirosActual.retiros.forEach((r, idx) => {
+                    rows.push([idx + 1, r.persona || "", Number(r.monto || 0)]);
+                });
+            } else {
+                rows.push([1, "Sin retiros registrados", 0]);
+            }
+
+            rows.push([]);
+            rows.push(["TOTAL GENERAL RETIRADO", "", Number(datosHojaRetirosActual.total || 0)]);
+
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            XLSX.utils.book_append_sheet(wb, ws, "Control_Retiros");
+            XLSX.writeFile(wb, `Retiros_${String(datosHojaRetirosActual.sucursal).replace(/\s+/g, '_')}_${datosHojaRetirosActual.fecha}.xlsx`);
+        }
+
+        // =========================================================
+        // 4. CALENDARIO DE CORTES (INGRESADOS VS PENDIENTES)
+        // =========================================================
+        async function cargarCalendarioCortes(forceRefresh = false) {
             const grid = document.getElementById('calGridDias');
             const mesInput = document.getElementById('calMesInput').value || obtenerFechaLocal().substring(0, 7);
             const sucursalSelect = document.getElementById('calSucursalSelect').value;
             const scriptUrl = localStorage.getItem('gas_script_url');
 
-            // Determinar sucursal efectiva según usuario
             const sucursalFiltro = (usuarioActual && usuarioActual.rol === 'sucursal')
                 ? usuarioActual.sucursal
                 : sucursalSelect;
-
-            grid.innerHTML = `<div class="col-span-7 text-center py-12 text-slate-500 font-semibold"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Cargando calendario de cortes del mes...</div>`;
 
             const [yearStr, monthStr] = mesInput.split('-');
             const year = parseInt(yearStr, 10);
             const month = parseInt(monthStr, 10);
 
-            // Nombres de mes
             const nombresMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
             document.getElementById('calTituloMes').textContent = `Mes: ${nombresMeses[month - 1]} ${year} ${sucursalFiltro === 'TODAS' ? '(Todas las Sucursales)' : ' - ' + sucursalFiltro}`;
 
-            if (!scriptUrl) {
-                grid.innerHTML = `<div class="col-span-7 text-center py-8 text-amber-600 font-semibold">Configure la URL de Google Apps Script.</div>`;
-                return;
+            const cacheKey = `cal_${mesInput}_${sucursalFiltro}`;
+            let result = null;
+
+            if (!forceRefresh) {
+                result = AppCache.get(cacheKey);
             }
 
-            try {
-                const ts = Date.now();
-                // Consultamos todos los cortes del mes desde el backend
-                let url = `${scriptUrl}?action=getCortesMes&mes=${encodeURIComponent(mesInput)}&_t=${ts}`;
-                if (sucursalFiltro !== 'TODAS') {
-                    url += `&sucursal=${encodeURIComponent(sucursalFiltro)}`;
+            if (!result) {
+                grid.innerHTML = `<div class="col-span-7 text-center py-12 text-slate-500 font-semibold"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Cargando calendario de cortes del mes...</div>`;
+
+                if (!scriptUrl) {
+                    grid.innerHTML = `<div class="col-span-7 text-center py-8 text-amber-600 font-semibold">Configure la URL de Google Apps Script.</div>`;
+                    return;
                 }
 
-                let result;
                 try {
-                    const response = await fetch(url, { method: 'GET', redirect: 'follow' });
-                    result = await response.json();
-                } catch (e) {
-                    // Fallback directo a buscarCortes si la versión del backend no tuviera getCortesMes
-                    const fallbackUrl = `${scriptUrl}?action=buscarCortes&sucursal=${sucursalFiltro === 'TODAS' ? '' : encodeURIComponent(sucursalFiltro)}&_t=${ts}`;
-                    const fbResp = await fetch(fallbackUrl, { method: 'GET', redirect: 'follow' });
-                    result = await fbResp.json();
-                }
+                    const ts = Date.now();
+                    let url = `${scriptUrl}?action=getCortesMes&mes=${encodeURIComponent(mesInput)}&_t=${ts}`;
+                    if (sucursalFiltro !== 'TODAS') {
+                        url += `&sucursal=${encodeURIComponent(sucursalFiltro)}`;
+                    }
 
-                // Agrupar cortes por fecha YYYY-MM-DD
+                    try {
+                        const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+                        result = await response.json();
+                    } catch (e) {
+                        const fallbackUrl = `${scriptUrl}?action=buscarCortes&sucursal=${sucursalFiltro === 'TODAS' ? '' : encodeURIComponent(sucursalFiltro)}&_t=${ts}`;
+                        const fbResp = await fetch(fallbackUrl, { method: 'GET', redirect: 'follow' });
+                        result = await fbResp.json();
+                    }
+
+                    if (result && result.success) {
+                        AppCache.set(cacheKey, result);
+                    }
+                } catch(e) {
+                    grid.innerHTML = `<div class="col-span-7 text-center py-8 text-rose-600 font-semibold">Error al cargar datos del calendario.</div>`;
+                    return;
+                }
+            }
+
                 const cortesPorFecha = {};
                 if (result && result.data && Array.isArray(result.data)) {
                     result.data.forEach(c => {
@@ -1682,13 +2158,10 @@
                     });
                 }
 
-                // Generar los días del mes en el calendario
                 const primerDiaMes = new Date(year, month - 1, 1);
                 const ultimoDiaMes = new Date(year, month, 0);
                 const totalDias = ultimoDiaMes.getDate();
 
-                // Día de la semana del 1 de mes (0 = Domingo, 1 = Lunes, ...)
-                // Lo adaptamos a Lunes = 0, ..., Domingo = 6
                 let primerDiaSemana = primerDiaMes.getDay() - 1;
                 if (primerDiaSemana === -1) primerDiaSemana = 6;
 
@@ -1699,14 +2172,12 @@
 
                 grid.innerHTML = '';
 
-                // Espacios vacíos antes del día 1
                 for (let i = 0; i < primerDiaSemana; i++) {
                     const empty = document.createElement('div');
                     empty.className = 'h-24 sm:h-28 bg-slate-50/50 rounded-xl border border-dashed border-slate-200';
                     grid.appendChild(empty);
                 }
 
-                // Días del mes
                 for (let d = 1; d <= totalDias; d++) {
                     const dayStr = String(d).padStart(2, '0');
                     const fechaActualDia = `${yearStr}-${monthStr}-${dayStr}`;
@@ -1723,7 +2194,6 @@
                         diasEvaluados++;
 
                         if (sucursalFiltro !== 'TODAS') {
-                            // Modo Sucursal Individual
                             const corte = cortesDelDia.find(c => c.sucursal.toUpperCase() === sucursalFiltro.toUpperCase());
                             if (corte) {
                                 cortesIngresadosCount++;
@@ -1750,7 +2220,6 @@
                                 `;
                             }
                         } else {
-                            // Modo Administrador General (Todas las Sucursales)
                             const totalEsperadas = SUCURSALES.length;
                             const registradasHoy = cortesDelDia.length;
 
@@ -1786,12 +2255,10 @@
                                 `;
                             }
 
-                            // Al hacer clic como admin abre el modal para ver cuáles ingresaron y cuáles faltan
                             dayCard.onclick = () => abrirCalDetalleModal(fechaActualDia, cortesDelDia);
                         }
 
                     } else {
-                        // Día futuro
                         contenidoEstado = `<div class="text-[10px] text-slate-300 mt-2">Día futuro</div>`;
                     }
 
@@ -1808,7 +2275,6 @@
                     grid.appendChild(dayCard);
                 }
 
-                // Actualizar contadores de cumplimiento
                 document.getElementById('calDiasEvaluadosLbl').textContent = diasEvaluados;
                 document.getElementById('calCortesIngresadosLbl').textContent = cortesIngresadosCount;
                 document.getElementById('calCortesFaltantesLbl').textContent = cortesFaltantesCount;
@@ -1824,7 +2290,6 @@
             }
         }
 
-        // Modal de detalle del día en el calendario (Para saber qué sucursales entregaron y cuáles no)
         function abrirCalDetalleModal(fecha, cortesDelDia) {
             document.getElementById('calModalFechaTexto').textContent = `Fecha: ${fecha}`;
             const listaContainer = document.getElementById('calModalListaSucursales');
@@ -1841,11 +2306,16 @@
                         <div>
                             <span class="font-extrabold text-slate-900 block">${suc}</span>
                             <span class="text-emerald-700 font-semibold text-[11px]"><i class="fa-solid fa-circle-check mr-1 text-emerald-600"></i> Corte Ingresado por: ${corte.nombreCajera || 'N/D'}</span>
-                            <div class="text-[11px] text-slate-600">Neto: $${(Number(corte.neto) || 0).toFixed(2)} | Últ. Retiro: $${(Number(corte.ultimoRetiro) || 0).toFixed(2)}</div>
+                            <div class="text-[11px] text-slate-600">Neto: $${(Number(corte.neto) || 0).toFixed(2)} | Retiros: $${(Number(corte.totalRetiros) || 0).toFixed(2)}</div>
                         </div>
-                        <button onclick="cerrarCalDetalleModal(); verHojaCorte('${suc}', '${fecha}');" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded-lg font-bold shadow text-xs">
-                            <i class="fa-solid fa-file-invoice mr-1"></i> Ver Hoja
-                        </button>
+                        <div class="flex space-x-1.5">
+                            <button onclick="cerrarCalDetalleModal(); abrirHojaRetiros('${suc}', '${fecha}');" class="bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1.5 rounded-lg font-bold shadow text-xs">
+                                <i class="fa-solid fa-hand-holding-dollar mr-1"></i> Retiros
+                            </button>
+                            <button onclick="cerrarCalDetalleModal(); verHojaCorte('${suc}', '${fecha}');" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded-lg font-bold shadow text-xs">
+                                <i class="fa-solid fa-file-invoice mr-1"></i> Corte
+                            </button>
+                        </div>
                     `;
                 } else {
                     item.className += " bg-rose-50 border-rose-200";
@@ -1869,15 +2339,24 @@
         }
 
         // =========================================================
-        // 4. REPORTES DE VENTAS POR PERÍODO
+        // 5. REPORTES DE VENTAS POR PERÍODO
         // =========================================================
-        async function cargarReporteVentas() {
+        async function cargarReporteVentas(forceRefresh = false) {
             const container = document.getElementById('ventasSucursalesContainer');
             const scriptUrl = localStorage.getItem('gas_script_url');
             const tipo = document.getElementById('tipoPeriodoVentas').value;
             const fecha = document.getElementById('filtroVentasFecha').value;
             const mes = document.getElementById('filtroVentasMes').value;
             const anio = document.getElementById('filtroVentasAnio').value;
+
+            const cacheKey = `ventas_${tipo}_${fecha}_${mes}_${anio}`;
+            if (!forceRefresh) {
+                const cached = AppCache.get(cacheKey);
+                if (cached) {
+                    renderizarReporteVentas(cached);
+                    return;
+                }
+            }
 
             container.innerHTML = `<div class="col-span-full text-center py-8 text-slate-500 font-semibold"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Calculando reporte de ventas...</div>`;
 
@@ -1893,42 +2372,8 @@
                 const result = await response.json();
 
                 if (result.success && result.data) {
-                    document.getElementById('rangoCalculadoInfo').textContent = `Período actual seleccionado: ${result.rangoTexto}`;
-
-                    const sucursalesMostrar = (usuarioActual && usuarioActual.rol === 'sucursal')
-                        ? [usuarioActual.sucursal]
-                        : SUCURSALES;
-
-                    let totalGeneral = 0;
-                    let maxVenta = -1;
-                    let topSucursal = 'N/D';
-
-                    container.innerHTML = '';
-                    sucursalesMostrar.forEach(suc => {
-                        const venta = Number(result.data[suc]) || 0;
-                        totalGeneral += venta;
-                        if (venta > maxVenta && venta > 0) {
-                            maxVenta = venta;
-                            topSucursal = suc;
-                        }
-
-                        const card = document.createElement('div');
-                        card.className = "bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-3 hover:shadow-md transition flex justify-between items-center";
-                        card.innerHTML = `
-                            <div>
-                                <h3 class="font-extrabold text-slate-800 text-sm flex items-center">
-                                    <i class="fa-solid fa-store text-brand-600 mr-2"></i> ${suc}
-                                </h3>
-                                <span class="text-xs text-slate-500">Ventas Totales del Período</span>
-                            </div>
-                            <span class="text-xl font-black text-brand-700">$${venta.toFixed(2)}</span>
-                        `;
-                        container.appendChild(card);
-                    });
-
-                    document.getElementById('ventasTotalesPeriodoLbl').textContent = `$${totalGeneral.toFixed(2)}`;
-                    document.getElementById('sucursalTopVentasLbl').textContent = (usuarioActual && usuarioActual.rol === 'sucursal') ? usuarioActual.sucursal : topSucursal;
-
+                    AppCache.set(cacheKey, result);
+                    renderizarReporteVentas(result);
                 } else {
                     container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error al obtener ventas: ${result.message || 'Error'}</div>`;
                 }
@@ -1936,6 +2381,45 @@
                 console.error(err);
                 container.innerHTML = `<div class="col-span-full text-center py-8 text-rose-600 font-semibold">Error de comunicación con Google Apps Script.</div>`;
             }
+        }
+
+        function renderizarReporteVentas(result) {
+            const container = document.getElementById('ventasSucursalesContainer');
+            document.getElementById('rangoCalculadoInfo').textContent = `Período actual seleccionado: ${result.rangoTexto}`;
+
+            const sucursalesMostrar = (usuarioActual && usuarioActual.rol === 'sucursal')
+                ? [usuarioActual.sucursal]
+                : SUCURSALES;
+
+            let totalGeneral = 0;
+            let maxVenta = -1;
+            let topSucursal = 'N/D';
+
+            container.innerHTML = '';
+            sucursalesMostrar.forEach(suc => {
+                const venta = Number(result.data[suc]) || 0;
+                totalGeneral += venta;
+                if (venta > maxVenta && venta > 0) {
+                    maxVenta = venta;
+                    topSucursal = suc;
+                }
+
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-3 hover:shadow-md transition flex justify-between items-center";
+                card.innerHTML = `
+                    <div>
+                        <h3 class="font-extrabold text-slate-800 text-sm flex items-center">
+                            <i class="fa-solid fa-store text-brand-600 mr-2"></i> ${suc}
+                        </h3>
+                        <span class="text-xs text-slate-500">Ventas Totales del Período</span>
+                    </div>
+                    <span class="text-xl font-black text-brand-700">$${venta.toFixed(2)}</span>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById('ventasTotalesPeriodoLbl').textContent = `$${totalGeneral.toFixed(2)}`;
+            document.getElementById('sucursalTopVentasLbl').textContent = (usuarioActual && usuarioActual.rol === 'sucursal') ? usuarioActual.sucursal : topSucursal;
         }
 
         function toggleFiltroPeriodo() {
@@ -1956,18 +2440,26 @@
         }
 
         // =========================================================
-        // 5. BÚSQUEDA DE CORTES Y VISTA COMO EN HOJA + EXCEL / PDF
+        // 6. BÚSQUEDA DE CORTES Y VISTA COMO EN HOJA
         // =========================================================
-        async function buscarCortes() {
+        async function buscarCortes(forceRefresh = false) {
             const tbody = document.getElementById('tablaResultadosCortes');
             const sucursalSelect = document.getElementById('searchSucursal').value;
             const fecha = document.getElementById('searchFecha').value;
             const scriptUrl = localStorage.getItem('gas_script_url');
 
-            // Seguridad de sucursal
             const sucursalEfectiva = (usuarioActual && usuarioActual.rol === 'sucursal')
                 ? usuarioActual.sucursal
                 : sucursalSelect;
+
+            const cacheKey = `search_${sucursalEfectiva}_${fecha}`;
+            if (!forceRefresh) {
+                const cached = AppCache.get(cacheKey);
+                if (cached) {
+                    renderizarResultadosBusqueda(cached);
+                    return;
+                }
+            }
 
             tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-500 font-semibold"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Buscando cortes en Google Sheets...</td></tr>`;
 
@@ -1983,41 +2475,8 @@
                 const result = await response.json();
 
                 if (result.success && result.data && result.data.length > 0) {
-                    cortesBuscadosActuales = result.data;
-                    document.getElementById('searchBulkActions').classList.remove('hidden');
-                    document.getElementById('searchResultCount').textContent = result.data.length;
-
-                    tbody.innerHTML = '';
-                    result.data.forEach(item => {
-                        const tr = document.createElement('tr');
-                        tr.className = "hover:bg-slate-50 transition";
-                        tr.innerHTML = `
-                            <td class="p-3 font-semibold text-slate-900">${item.fecha}</td>
-                            <td class="p-3 font-bold text-slate-800">${item.sucursal}</td>
-                            <td class="p-3 text-slate-600">${item.nombreCajera || 'N/D'}</td>
-                            <td class="p-3 text-right text-emerald-600 font-bold">$${Number(item.totalIngresos || 0).toFixed(2)}</td>
-                            <td class="p-3 text-right text-rose-600 font-bold">$${Number(item.totalEgresos || 0).toFixed(2)}</td>
-                            <td class="p-3 text-right font-black ${Number(item.neto) >= 0 ? 'text-brand-700' : 'text-rose-600'}">$${Number(item.neto || 0).toFixed(2)}</td>
-                            <td class="p-3 text-right font-black text-amber-800 bg-amber-50/50">$${Number(item.ultimoRetiro || 0).toFixed(2)}</td>
-                            <td class="p-3 text-center">
-                                <div class="flex items-center justify-center space-x-1">
-                                    <button onclick="verHojaCorte('${item.sucursal}', '${item.fecha}')" class="bg-brand-600 hover:bg-brand-700 text-white px-2 py-1 rounded text-xs font-bold transition shadow" title="Ver Hoja Completa">
-                                        <i class="fa-solid fa-file-invoice"></i> <span class="hidden lg:inline">Ver Hoja</span>
-                                    </button>
-                                    <button onclick="descargarCortePDFDirecto('${item.sucursal}', '${item.fecha}')" class="bg-rose-600 hover:bg-rose-700 text-white px-2 py-1 rounded text-xs font-bold transition shadow" title="Descargar PDF">
-                                        <i class="fa-solid fa-file-pdf"></i>
-                                    </button>
-                                    <button onclick="descargarCorteExcelDirecto('${item.sucursal}', '${item.fecha}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded text-xs font-bold transition shadow" title="Descargar Excel">
-                                        <i class="fa-solid fa-file-excel"></i>
-                                    </button>
-                                    <button onclick="prepararEdicionDirecta('${item.sucursal}', '${item.fecha}')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-1 rounded text-xs font-bold transition" title="Editar">
-                                        <i class="fa-solid fa-pen-to-square"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
+                    AppCache.set(cacheKey, result.data);
+                    renderizarResultadosBusqueda(result.data);
                 } else {
                     cortesBuscadosActuales = [];
                     document.getElementById('searchBulkActions').classList.add('hidden');
@@ -2029,20 +2488,71 @@
             }
         }
 
+        function renderizarResultadosBusqueda(datos) {
+            const tbody = document.getElementById('tablaResultadosCortes');
+            cortesBuscadosActuales = datos;
+            document.getElementById('searchBulkActions').classList.remove('hidden');
+            document.getElementById('searchResultCount').textContent = datos.length;
+
+            tbody.innerHTML = '';
+            datos.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-slate-900">${item.fecha}</td>
+                    <td class="p-3 font-bold text-slate-800">${item.sucursal}</td>
+                    <td class="p-3 text-slate-600">${item.nombreCajera || 'N/D'}</td>
+                    <td class="p-3 text-right text-emerald-600 font-bold">$${Number(item.totalIngresos || 0).toFixed(2)}</td>
+                    <td class="p-3 text-right text-rose-600 font-bold">$${Number(item.totalEgresos || 0).toFixed(2)}</td>
+                    <td class="p-3 text-right font-black ${Number(item.neto) >= 0 ? 'text-brand-700' : 'text-rose-600'}">$${Number(item.neto || 0).toFixed(2)}</td>
+                    <td class="p-3 text-right font-black text-amber-800 bg-amber-50/50">$${Number(item.ultimoRetiro || 0).toFixed(2)}</td>
+                    <td class="p-3 text-center">
+                        <div class="flex items-center justify-center space-x-1">
+                            <button onclick="verHojaCorte('${item.sucursal}', '${item.fecha}')" class="bg-brand-600 hover:bg-brand-700 text-white px-2 py-1 rounded text-xs font-bold transition shadow" title="Ver Hoja Completa de Corte">
+                                <i class="fa-solid fa-file-invoice"></i> <span class="hidden lg:inline">Ver Hoja</span>
+                            </button>
+                            <button onclick="abrirHojaRetiros('${item.sucursal}', '${item.fecha}')" class="bg-amber-600 hover:bg-amber-700 text-white px-2 py-1 rounded text-xs font-bold transition shadow" title="Ver Hoja de Retiros">
+                                <i class="fa-solid fa-hand-holding-dollar"></i>
+                            </button>
+                            <button onclick="descargarCortePDFDirecto('${item.sucursal}', '${item.fecha}')" class="bg-rose-600 hover:bg-rose-700 text-white px-2 py-1 rounded text-xs font-bold transition shadow" title="Descargar PDF">
+                                <i class="fa-solid fa-file-pdf"></i>
+                            </button>
+                            <button onclick="descargarCorteExcelDirecto('${item.sucursal}', '${item.fecha}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded text-xs font-bold transition shadow" title="Descargar Excel">
+                                <i class="fa-solid fa-file-excel"></i>
+                            </button>
+                            <button onclick="prepararEdicionDirecta('${item.sucursal}', '${item.fecha}')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-1 rounded text-xs font-bold transition" title="Editar">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
         // =========================================================
-        // 6. VISUALIZAR CORTE "COMO EN HOJA" (DETALLE TOTAL)
+        // 7. VISUALIZAR CORTE "COMO EN HOJA" (DETALLE TOTAL)
         // =========================================================
-        async function verHojaCorte(sucursal, fecha) {
+        async function verHojaCorte(sucursal, fecha, forceRefresh = false) {
             const scriptUrl = localStorage.getItem('gas_script_url');
             if (!scriptUrl) {
                 alert('URL de Google Apps Script no configurada.');
                 return;
             }
 
-            // Mostrar modal con estado de carga
             document.getElementById('hojaCorteModal').classList.remove('hidden');
             document.getElementById('docFecha').textContent = fecha;
             document.getElementById('docSucursal').textContent = sucursal;
+
+            const cacheKey = `corte_${sucursal}_${fecha}`;
+            if (!forceRefresh) {
+                const cached = AppCache.get(cacheKey);
+                if (cached) {
+                    renderizarHojaCorte(cached);
+                    return;
+                }
+            }
+
             document.getElementById('docNombreCajera').textContent = "Cargando datos completos...";
 
             try {
@@ -2054,6 +2564,7 @@
                 const result = await response.json();
 
                 if (result.success && result.data) {
+                    AppCache.set(cacheKey, result.data);
                     renderizarHojaCorte(result.data);
                 } else {
                     alert('No se pudo obtener el detalle de la hoja diaria: ' + (result.message || 'Registro no encontrado'));
@@ -2066,7 +2577,6 @@
             }
         }
 
-        // Renderizar todos los campos en la vista de hoja
         function renderizarHojaCorte(d) {
             corteSeleccionadoHoja = d;
 
@@ -2109,7 +2619,6 @@
             document.getElementById('docRetirosParciales').textContent = `$${rp.toFixed(2)}`;
             document.getElementById('docTotalEgresosBase').textContent = `$${totalEgresosBase.toFixed(2)}`;
 
-            // Renderizar Cuentas por Cobrar Clientes
             const tablaCxc = document.getElementById('docTablaCxc');
             let totalCxc = 0;
             tablaCxc.innerHTML = '';
@@ -2130,7 +2639,6 @@
             }
             document.getElementById('docTotalCxcHeader').textContent = `Total: $${totalCxc.toFixed(2)}`;
 
-            // Renderizar Egresos en Efectivo
             const tablaEgresos = document.getElementById('docTablaEgresos');
             let totalEgresosEfectivo = 0;
             tablaEgresos.innerHTML = '';
@@ -2151,7 +2659,26 @@
             }
             document.getElementById('docTotalEgresosEfectivoHeader').textContent = `Total: $${totalEgresosEfectivo.toFixed(2)}`;
 
-            // Cuadre final
+            // Retiros Detallados Informativos
+            const tablaRetiros = document.getElementById('docTablaRetiros');
+            let totalRetiros = 0;
+            tablaRetiros.innerHTML = '';
+            if (d.retirosDetalle && d.retirosDetalle.length > 0) {
+                d.retirosDetalle.forEach(r => {
+                    const monto = Number(r.monto) || 0;
+                    totalRetiros += monto;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="p-2 font-bold text-slate-800"><i class="fa-solid fa-user-check text-amber-600 mr-1.5"></i> ${r.persona || 'No especificado'}</td>
+                        <td class="p-2 text-right font-black text-amber-900">$${monto.toFixed(2)}</td>
+                    `;
+                    tablaRetiros.appendChild(tr);
+                });
+            } else {
+                tablaRetiros.innerHTML = `<tr><td colspan="2" class="p-2 text-center text-slate-400">Sin retiros registrados en este corte.</td></tr>`;
+            }
+            document.getElementById('docTotalRetirosHeader').textContent = `Total Retirado: $${totalRetiros.toFixed(2)}`;
+
             const totalEgresosGeneral = totalEgresosBase + totalEgresosEfectivo + totalCxc;
             const neto = totalIngresos - totalEgresosGeneral;
             const ultimoRetiro = Number(d.ultimoRetiro) || 0;
@@ -2178,10 +2705,8 @@
         }
 
         // =========================================================
-        // 7. DESCARGA EN PDF Y EXCEL DE CORTES
+        // 8. DESCARGAS EN PDF Y EXCEL DE CORTES
         // =========================================================
-
-        // Descargar PDF de la Hoja Actual abierta
         function descargarHojaActualPDF() {
             const el = document.getElementById('hojaCorteDocumento');
             const sucursal = (corteSeleccionadoHoja && corteSeleccionadoHoja.sucursal) ? corteSeleccionadoHoja.sucursal.replace(/\s+/g, '_') : 'Sucursal';
@@ -2198,13 +2723,11 @@
             html2pdf().set(opt).from(el).save();
         }
 
-        // Descargar Excel de la Hoja Actual abierta
         function descargarHojaActualExcel() {
             if (!corteSeleccionadoHoja) return;
             generarExcelDeCorte(corteSeleccionadoHoja);
         }
 
-        // Descarga directa sin abrir modal primero
         async function descargarCortePDFDirecto(sucursal, fecha) {
             await verHojaCorte(sucursal, fecha);
             setTimeout(() => {
@@ -2228,7 +2751,6 @@
             }
         }
 
-        // Generador universal de Excel estructurado para un corte
         function generarExcelDeCorte(d) {
             const wb = XLSX.utils.book_new();
 
@@ -2248,6 +2770,9 @@
 
             let totEgrEfec = 0;
             if (d.egresosCompras) d.egresosCompras.forEach(e => totEgrEfec += Number(e.monto) || 0);
+
+            let totRetiros = 0;
+            if (d.retirosDetalle) d.retirosDetalle.forEach(r => totRetiros += Number(r.monto) || 0);
 
             const totEgrGen = totEgrBase + totEgrEfec + totCxc;
             const neto = totIng - totEgrGen;
@@ -2300,11 +2825,21 @@
             rows.push(["TOTAL EGRESOS EFECTIVO", "", totEgrEfec]);
             rows.push([]);
 
+            rows.push(["CONTROL DE RETIROS (INDEPENDIENTE)"]);
+            rows.push(["Persona que Retiró", "Monto ($)"]);
+            if (d.retirosDetalle && d.retirosDetalle.length > 0) {
+                d.retirosDetalle.forEach(r => rows.push([r.persona || "", Number(r.monto || 0)]));
+            } else {
+                rows.push(["Sin retiros registrados", 0]);
+            }
+            rows.push(["TOTAL RETIROS DEL DÍA", Number(totRetiros)]);
+            rows.push([]);
+
             rows.push(["CUADRE GENERAL DE CAJA", "VALOR ($)"]);
             rows.push(["TOTAL INGRESOS", totIng]);
             rows.push(["TOTAL EGRESOS GENERAL", totEgrGen]);
             rows.push(["NETO (INGRESOS - EGRESOS)", neto]);
-            rows.push(["ÚLTIMO RETIRO", ultRet]);
+            rows.push(["ÚLTIMO RETIRO (CUADRE)", ultRet]);
             rows.push(["SOBRANTE", dif > 0 ? dif : 0]);
             rows.push(["FALTANTE", dif < 0 ? Math.abs(dif) : 0]);
 
@@ -2313,7 +2848,6 @@
             XLSX.writeFile(wb, `Corte_${String(d.sucursal).replace(/\s+/g, '_')}_${d.fecha}.xlsx`);
         }
 
-        // Exportar toda la lista de búsqueda actual a Excel
         function descargarResultadosExcel() {
             if (!cortesBuscadosActuales || cortesBuscadosActuales.length === 0) {
                 alert('No hay registros para exportar.');
@@ -2327,7 +2861,8 @@
                 "Total Ingresos ($)": Number(c.totalIngresos || 0),
                 "Total Egresos ($)": Number(c.totalEgresos || 0),
                 "Neto ($)": Number(c.neto || 0),
-                "Último Retiro ($)": Number(c.ultimoRetiro || 0)
+                "Último Retiro ($)": Number(c.ultimoRetiro || 0),
+                "Total Retiros ($)": Number(c.totalRetiros || 0)
             }));
 
             const ws = XLSX.utils.json_to_sheet(data);
@@ -2336,7 +2871,6 @@
             XLSX.writeFile(wb, `Reporte_Cortes_${obtenerFechaLocal()}.xlsx`);
         }
 
-        // Exportar toda la lista de búsqueda a PDF
         function descargarResultadosPDF() {
             if (!cortesBuscadosActuales || cortesBuscadosActuales.length === 0) {
                 alert('No hay registros para exportar.');
@@ -2361,6 +2895,7 @@
                             <th style="padding: 6px; text-align: right;">Egresos</th>
                             <th style="padding: 6px; text-align: right;">Neto</th>
                             <th style="padding: 6px; text-align: right;">Últ. Retiro</th>
+                            <th style="padding: 6px; text-align: right;">Retiros Total</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -2373,6 +2908,7 @@
                                 <td style="padding: 6px; text-align: right; color: #b91c1c; font-weight: bold;">$${Number(c.totalEgresos||0).toFixed(2)}</td>
                                 <td style="padding: 6px; text-align: right; font-weight: bold;">$${Number(c.neto||0).toFixed(2)}</td>
                                 <td style="padding: 6px; text-align: right; color: #b45309; font-weight: bold;">$${Number(c.ultimoRetiro||0).toFixed(2)}</td>
+                                <td style="padding: 6px; text-align: right; color: #d97706; font-weight: bold;">$${Number(c.totalRetiros||0).toFixed(2)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -2391,7 +2927,7 @@
         }
 
         // =========================================================
-        // 8. CÁLCULOS Y FORMULARIOS DE CORTE Y EDICIÓN
+        // 9. CÁLCULOS Y FORMULARIOS DE CORTE Y EDICIÓN
         // =========================================================
 
         function addCxcRow(containerId, cliente = '', factura = '', monto = 0) {
@@ -2428,7 +2964,28 @@
             if (containerId === 'editEgresoContainer') calcularTotalesEdit(); else calcularTotales();
         }
 
+        // ================= NUEVA FUNCIÓN: AGREGAR FILA DE RETIROS (INDEPENDIENTE) =================
+        function addRetiroRow(containerId, persona = '', monto = 0) {
+            const container = document.getElementById(containerId);
+            const row = document.createElement('div');
+            row.className = 'flex items-center space-x-2 retiro-row';
+            row.innerHTML = `
+                <div class="relative w-2/3">
+                    <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400 text-sm"><i class="fa-solid fa-user"></i></span>
+                    <input type="text" placeholder="Nombre de quien retiró" value="${persona}" class="w-full pl-8 pr-2 py-2 border border-slate-300 rounded-lg text-sm retiro-persona font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none" required>
+                </div>
+                <div class="relative w-1/3">
+                    <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400 text-sm font-bold">$</span>
+                    <input type="number" step="0.01" placeholder="0.00" value="${monto || ''}" oninput="${containerId === 'editRetirosContainer' ? 'calcularTotalesEdit()' : 'calcularTotales()'}" class="w-full pl-6 pr-2 py-2 border border-slate-300 rounded-lg text-sm retiro-monto font-extrabold text-amber-900 focus:ring-2 focus:ring-amber-500 focus:outline-none" required>
+                </div>
+                <button type="button" onclick="this.parentElement.remove(); ${containerId === 'editRetirosContainer' ? 'calcularTotalesEdit()' : 'calcularTotales()'};" class="text-rose-500 hover:text-rose-700 p-2 transition" title="Eliminar este retiro"><i class="fa-solid fa-trash-can"></i></button>
+            `;
+            container.appendChild(row);
+            if (containerId === 'editRetirosContainer') calcularTotalesEdit(); else calcularTotales();
+        }
+
         // Totales Formulario Principal
+        // NOTA IMPORTANTE: Los retiros se suman de forma totalmente independiente sin afectar ingresos, egresos ni neto del corte
         function calcularTotales() {
             const vc = parseFloat(document.getElementById('ventaConsumidor').value) || 0;
             const vco = parseFloat(document.getElementById('ventaContribuyentes').value) || 0;
@@ -2453,6 +3010,14 @@
             document.querySelectorAll('#inputTab .cxc-monto').forEach(input => { totalCxc += parseFloat(input.value) || 0; });
             document.getElementById('totalCxcLbl').textContent = `$${totalCxc.toFixed(2)}`;
 
+            // Suma independiente de la sección CONTROL DE RETIROS
+            let totalRetiros = 0;
+            document.querySelectorAll('#inputTab .retiro-monto').forEach(input => { totalRetiros += parseFloat(input.value) || 0; });
+            if (document.getElementById('totalRetirosLbl')) {
+                document.getElementById('totalRetirosLbl').textContent = `$${totalRetiros.toFixed(2)}`;
+            }
+
+            // Los egresos y el neto se mantienen idénticos (no se altera la fórmula original)
             const totalEgresosGeneral = totalEgresosBase + totalEgresosEfectivo + totalCxc;
             document.getElementById('totalEgresosGeneralLbl').textContent = `$${totalEgresosGeneral.toFixed(2)}`;
 
@@ -2503,6 +3068,13 @@
             document.querySelectorAll('#editCorteForm .cxc-monto').forEach(input => { totalCxc += parseFloat(input.value) || 0; });
             document.getElementById('editTotalCxcLbl').textContent = `$${totalCxc.toFixed(2)}`;
 
+            // Suma independiente de retiros en edición
+            let totalRetiros = 0;
+            document.querySelectorAll('#editCorteForm .retiro-monto').forEach(input => { totalRetiros += parseFloat(input.value) || 0; });
+            if (document.getElementById('editTotalRetirosLbl')) {
+                document.getElementById('editTotalRetirosLbl').textContent = `$${totalRetiros.toFixed(2)}`;
+            }
+
             const totalEgresosGeneral = totalEgresosBase + totalEgresosEfectivo + totalCxc;
             document.getElementById('editTotalEgresosGeneralLbl').textContent = `$${totalEgresosGeneral.toFixed(2)}`;
 
@@ -2547,6 +3119,13 @@
                 return;
             }
 
+            const cacheKey = `corte_${sucursal}_${fecha}`;
+            const cached = AppCache.get(cacheKey);
+            if (cached) {
+                poblarFormularioEdicion(cached);
+                return;
+            }
+
             if (!scriptUrl) {
                 alert('URL de Google Apps Script no configurada.');
                 return;
@@ -2561,36 +3140,8 @@
                 const result = await response.json();
 
                 if (result.success && result.data) {
-                    const d = result.data;
-                    document.getElementById('editInfoLabel').textContent = `${d.sucursal} - ${d.fecha}`;
-                    document.getElementById('editSaldoInicial').value = d.saldoInicial || 0;
-                    document.getElementById('editVentaConsumidor').value = d.ventaConsumidor || 0;
-                    document.getElementById('editVentaContribuyentes').value = d.ventaContribuyentes || 0;
-                    document.getElementById('editIngresosCxc').value = d.ingresosCxc || 0;
-                    document.getElementById('editOtrosIngresos').value = d.otrosIngresos || 0;
-                    document.getElementById('editCobrosTarjetas').value = d.cobrosTarjetas || 0;
-                    document.getElementById('editCobrosTransferencias').value = d.cobrosTransferencias || 0;
-                    document.getElementById('editRetirosParciales').value = d.retirosParciales || 0;
-                    document.getElementById('editUltimoRetiro').value = d.ultimoRetiro || 0;
-                    document.getElementById('editCfDel').value = d.cfDel || '';
-                    document.getElementById('editCfAl').value = d.cfAl || '';
-                    document.getElementById('editCcfDel').value = d.ccfDel || '';
-                    document.getElementById('editCcfAl').value = d.ccfAl || '';
-                    document.getElementById('editNombreCajera').value = d.nombreCajera || '';
-                    document.getElementById('editNombreEncargada').value = d.nombreEncargada || '';
-
-                    document.getElementById('editCxcContainer').innerHTML = '';
-                    if (d.cxcClientes && d.cxcClientes.length > 0) {
-                        d.cxcClientes.forEach(c => addCxcRow('editCxcContainer', c.cliente, c.factura, c.monto));
-                    }
-
-                    document.getElementById('editEgresoContainer').innerHTML = '';
-                    if (d.egresosCompras && d.egresosCompras.length > 0) {
-                        d.egresosCompras.forEach(e => addEgresoRow('editEgresoContainer', e.proveedor, e.factura, e.monto));
-                    }
-
-                    calcularTotalesEdit();
-                    form.classList.remove('hidden');
+                    AppCache.set(cacheKey, result.data);
+                    poblarFormularioEdicion(result.data);
                 } else {
                     alert(result.message || 'No se encontró el registro especificado.');
                     form.classList.add('hidden');
@@ -2599,6 +3150,47 @@
                 console.error(err);
                 alert('Error al obtener datos de Google Sheets.');
             }
+        }
+
+        function poblarFormularioEdicion(d) {
+            const form = document.getElementById('editCorteForm');
+            document.getElementById('editInfoLabel').textContent = `${d.sucursal} - ${d.fecha}`;
+            document.getElementById('editSaldoInicial').value = d.saldoInicial || 0;
+            document.getElementById('editVentaConsumidor').value = d.ventaConsumidor || 0;
+            document.getElementById('editVentaContribuyentes').value = d.ventaContribuyentes || 0;
+            document.getElementById('editIngresosCxc').value = d.ingresosCxc || 0;
+            document.getElementById('editOtrosIngresos').value = d.otrosIngresos || 0;
+            document.getElementById('editCobrosTarjetas').value = d.cobrosTarjetas || 0;
+            document.getElementById('editCobrosTransferencias').value = d.cobrosTransferencias || 0;
+            document.getElementById('editRetirosParciales').value = d.retirosParciales || 0;
+            document.getElementById('editUltimoRetiro').value = d.ultimoRetiro || 0;
+            document.getElementById('editCfDel').value = d.cfDel || '';
+            document.getElementById('editCfAl').value = d.cfAl || '';
+            document.getElementById('editCcfDel').value = d.ccfDel || '';
+            document.getElementById('editCcfAl').value = d.ccfAl || '';
+            document.getElementById('editNombreCajera').value = d.nombreCajera || '';
+            document.getElementById('editNombreEncargada').value = d.nombreEncargada || '';
+
+            document.getElementById('editCxcContainer').innerHTML = '';
+            if (d.cxcClientes && d.cxcClientes.length > 0) {
+                d.cxcClientes.forEach(c => addCxcRow('editCxcContainer', c.cliente, c.factura, c.monto));
+            }
+
+            document.getElementById('editEgresoContainer').innerHTML = '';
+            if (d.egresosCompras && d.egresosCompras.length > 0) {
+                d.egresosCompras.forEach(e => addEgresoRow('editEgresoContainer', e.proveedor, e.factura, e.monto));
+            }
+
+            // Cargar retiros en edición
+            document.getElementById('editRetirosContainer').innerHTML = '';
+            if (d.retirosDetalle && d.retirosDetalle.length > 0) {
+                d.retirosDetalle.forEach(r => addRetiroRow('editRetirosContainer', r.persona, r.monto));
+            } else {
+                addRetiroRow('editRetirosContainer');
+            }
+
+            calcularTotalesEdit();
+            form.classList.remove('hidden');
         }
 
         // Guardar Nuevo Corte
@@ -2630,6 +3222,16 @@
                 });
             });
 
+            // Extraer retiros independientes
+            const retirosDetalle = [];
+            document.querySelectorAll('#retirosContainer .retiro-row').forEach(row => {
+                const persona = row.querySelector('.retiro-persona').value.trim();
+                const monto = parseFloat(row.querySelector('.retiro-monto').value) || 0;
+                if (persona || monto > 0) {
+                    retirosDetalle.push({ persona, monto });
+                }
+            });
+
             const sucursalVal = (usuarioActual && usuarioActual.rol === 'sucursal')
                 ? usuarioActual.sucursal
                 : document.getElementById('sucursal').value;
@@ -2654,7 +3256,8 @@
                 nombreCajera: document.getElementById('nombreCajera').value,
                 nombreEncargada: document.getElementById('nombreEncargada').value,
                 cxcClientes: cxcClientes,
-                egresosCompras: egresosCompras
+                egresosCompras: egresosCompras,
+                retirosDetalle: retirosDetalle
             };
 
             btn.disabled = true;
@@ -2671,9 +3274,8 @@
 
                 if (result.success) {
                     alert('¡Corte de caja guardado exitosamente en Google Sheets!');
-                    loadKPIs();
-                    cargarCalendarioCortes();
-                    cargarReporteVentas();
+                    AppCache.clear();
+                    loadKPIs(true);
 
                     document.getElementById('corteForm').reset();
                     document.getElementById('fecha').value = obtenerFechaLocal();
@@ -2682,8 +3284,10 @@
                     }
                     document.getElementById('cxcContainer').innerHTML = '';
                     document.getElementById('egresoContainer').innerHTML = '';
+                    document.getElementById('retirosContainer').innerHTML = '';
                     addCxcRow('cxcContainer');
                     addEgresoRow('egresoContainer');
+                    addRetiroRow('retirosContainer');
                     calcularTotales();
                 } else {
                     alert('Error al guardar: ' + result.message);
@@ -2726,6 +3330,15 @@
                 });
             });
 
+            const retirosDetalle = [];
+            document.querySelectorAll('#editRetirosContainer .retiro-row').forEach(row => {
+                const persona = row.querySelector('.retiro-persona').value.trim();
+                const monto = parseFloat(row.querySelector('.retiro-monto').value) || 0;
+                if (persona || monto > 0) {
+                    retirosDetalle.push({ persona, monto });
+                }
+            });
+
             const sucursalVal = (usuarioActual && usuarioActual.rol === 'sucursal')
                 ? usuarioActual.sucursal
                 : document.getElementById('editLoadSucursal').value;
@@ -2750,7 +3363,8 @@
                 nombreCajera: document.getElementById('editNombreCajera').value,
                 nombreEncargada: document.getElementById('editNombreEncargada').value,
                 cxcClientes: cxcClientes,
-                egresosCompras: egresosCompras
+                egresosCompras: egresosCompras,
+                retirosDetalle: retirosDetalle
             };
 
             btn.disabled = true;
@@ -2767,9 +3381,8 @@
 
                 if (result.success) {
                     alert('¡Corte de caja actualizado exitosamente!');
-                    loadKPIs();
-                    cargarCalendarioCortes();
-                    cargarReporteVentas();
+                    AppCache.clear();
+                    loadKPIs(true);
                 } else {
                     alert('Error al actualizar: ' + result.message);
                 }
@@ -2783,7 +3396,7 @@
         }
 
         // =========================================================
-        // 9. CONFIGURACIÓN MODAL GAS URL
+        // 10. CONFIGURACIÓN MODAL GAS URL
         // =========================================================
         function openConfigModal() { document.getElementById('configModal').classList.remove('hidden'); }
         function closeConfigModal() { document.getElementById('configModal').classList.add('hidden'); }
@@ -2792,9 +3405,8 @@
             localStorage.setItem('gas_script_url', url);
             closeConfigModal();
             alert('¡URL de Google Apps Script guardada exitosamente!');
-            loadKPIs();
-            cargarCalendarioCortes();
-            cargarReporteVentas();
+            AppCache.clear();
+            loadKPIs(true);
         }
     </script>
 </body>
