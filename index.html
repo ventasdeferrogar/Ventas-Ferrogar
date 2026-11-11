@@ -37,20 +37,26 @@
     <style>
         /* Estilos optimizados para impresión física o Guardar como PDF */
         @media print {
+            @page {
+                size: landscape;
+                margin: 6mm;
+            }
             body * {
                 visibility: hidden !important;
             }
             #hojaCorteDocumento, #hojaCorteDocumento *,
-            #hojaRetirosDocumento, #hojaRetirosDocumento * {
+            #hojaRetirosDocumento, #hojaRetirosDocumento *,
+            #reporteMensualDoc, #reporteMensualDoc *,
+            #reporteEgresosDoc, #reporteEgresosDoc * {
                 visibility: visible !important;
             }
-            #hojaCorteDocumento, #hojaRetirosDocumento {
+            #hojaCorteDocumento, #hojaRetirosDocumento, #reporteMensualDoc, #reporteEgresosDoc {
                 position: absolute !important;
                 left: 0 !important;
                 top: 0 !important;
                 width: 100% !important;
                 margin: 0 !important;
-                padding: 12px !important;
+                padding: 10px !important;
                 box-shadow: none !important;
                 border: none !important;
                 background: white !important;
@@ -185,6 +191,11 @@
             <button onclick="switchTab('editTab')" id="btnEditTab" class="py-4 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-semibold text-sm flex items-center space-x-2 transition">
                 <i class="fa-solid fa-pen-to-square text-slate-400"></i>
                 <span>Editar Corte</span>
+            </button>
+            <button onclick="switchTab('reporteMensualTab')" id="btnReporteMensualTab" class="hidden py-4 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-semibold text-sm flex items-center space-x-2 transition">
+                <i class="fa-solid fa-file-invoice-dollar text-slate-400"></i>
+                <span>Reportes</span>
+                <span class="ml-1 px-1.5 py-0.5 rounded text-[10px] bg-purple-100 text-purple-700 font-bold uppercase">Admin</span>
             </button>
         </div>
     </nav>
@@ -993,6 +1004,310 @@
             </form>
         </div>
 
+        <!-- ================= TAB 6: CENTRO DE REPORTES (ADMIN EXCLUSIVO) ================= -->
+        <div id="reporteMensualTab" class="hidden space-y-6">
+
+            <!-- Selector de Sub-Reporte (Ventas vs Egresos por Compras) -->
+            <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-2 no-imprimir">
+                <button onclick="cambiarSubReporte('ventas')" id="subBtnRepVentas" class="flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-bold flex items-center justify-center space-x-2 transition bg-brand-700 text-white shadow">
+                    <i class="fa-solid fa-table-cells text-base"></i>
+                    <span>1. Ventas según Corte (Matriz Mensual)</span>
+                </button>
+                <button onclick="cambiarSubReporte('egresos')" id="subBtnRepEgresos" class="flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-semibold flex items-center justify-center space-x-2 transition bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    <i class="fa-solid fa-money-bill-transfer text-base"></i>
+                    <span>2. Egresos por Compras / Pagos en Efectivo</span>
+                </button>
+            </div>
+
+            <!-- SUB-SECCIÓN 1: VENTAS SEGÚN CORTE (MATRIZ MENSUAL) -->
+            <div id="subSeccionRepVentas" class="space-y-6">
+                <!-- Header Controls Card -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 no-imprimir">
+                    <div class="space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200 uppercase tracking-wide">
+                                <i class="fa-solid fa-shield-halved mr-1"></i> Exclusivo Admin
+                            </span>
+                            <h2 class="text-xl font-black text-slate-900">Reporte Mensual de Ventas por Sucursal</h2>
+                        </div>
+                        <p class="text-xs text-slate-500">Matriz detallada diaria de Venta Consumidor Final y Crédito Fiscal (CCF) de todas las sucursales.</p>
+                    </div>
+
+                    <!-- Selectores y Botones de Exportación -->
+                    <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                        <div class="flex items-center space-x-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 shadow-inner">
+                            <label for="reporteMesInput" class="text-xs font-bold text-slate-600">Mes:</label>
+                            <input type="month" id="reporteMesInput" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500" onchange="cargarReporteMensual(true)">
+                        </div>
+
+                        <button onclick="cargarReporteMensual(true)" title="Recargar datos del mes" class="bg-brand-700 hover:bg-brand-800 text-white px-3 py-2 rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                            <span class="hidden sm:inline">Actualizar</span>
+                        </button>
+
+                        <button onclick="descargarReporteMensualExcel()" title="Descargar como Excel (.xlsx)" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5">
+                            <i class="fa-solid fa-file-excel text-emerald-200"></i>
+                            <span>Descargar Excel</span>
+                        </button>
+
+                        <button onclick="descargarReporteMensualPDF()" title="Descargar como PDF horizontal" class="bg-rose-700 hover:bg-rose-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5">
+                            <i class="fa-solid fa-file-pdf text-rose-200"></i>
+                            <span>Descargar PDF</span>
+                        </button>
+
+                        <button onclick="imprimirReporteMensual()" title="Imprimir reporte oficial" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-2 rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5">
+                            <i class="fa-solid fa-print"></i>
+                            <span class="hidden sm:inline">Imprimir</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mini Resumen KPIs del Mes -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 no-imprimir">
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-user-tag"></i>
+                        </div>
+                        <div>
+                            <div class="text-[10px] uppercase font-bold text-slate-500">Total Consumidor Final</div>
+                            <div class="text-base font-extrabold text-blue-900" id="repKpiConsumidor">$ 0.00</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-receipt"></i>
+                        </div>
+                        <div>
+                            <div class="text-[10px] uppercase font-bold text-slate-500">Total Contribuyentes CCF</div>
+                            <div class="text-base font-extrabold text-emerald-900" id="repKpiCcf">$ 0.00</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-sack-dollar"></i>
+                        </div>
+                        <div>
+                            <div class="text-[10px] uppercase font-bold text-slate-500">Gran Total Ventas Mes</div>
+                            <div class="text-base font-extrabold text-brand-900" id="repKpiTotal">$ 0.00</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </div>
+                        <div>
+                            <div class="text-[10px] uppercase font-bold text-slate-500">Días con Cortes</div>
+                            <div class="text-base font-extrabold text-slate-900" id="repKpiDias">0 / 0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contenedor del Documento Oficial de Reporte -->
+                <div class="bg-white rounded-2xl shadow-md border border-slate-300 overflow-hidden">
+                    <!-- Barra informativa interna -->
+                    <div class="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center text-xs text-slate-600 no-imprimir">
+                        <span class="flex items-center space-x-1.5 font-medium">
+                            <i class="fa-solid fa-sheet-plastic text-brand-600"></i>
+                            <span>Vista previa idéntica al formato contable oficial</span>
+                        </span>
+                        <span class="text-[11px] text-slate-400">Grupo Ferrogar & Construgar</span>
+                    </div>
+
+                    <!-- Documento Imprimible y Exportable -->
+                    <div class="p-4 sm:p-6 overflow-x-auto bg-slate-100 flex justify-center">
+                        <div id="reporteMensualDoc" class="bg-white p-6 shadow-sm border border-slate-300 rounded" style="min-width: 1050px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; color: #000;">
+                            
+                            <!-- Encabezado Oficial -->
+                            <div class="text-center font-black text-xl uppercase tracking-wider text-black mb-1">
+                                FERRETERIA FERROGAR, S.A DE C.V
+                            </div>
+                            <div class="text-center font-bold text-sm uppercase tracking-wide text-black mb-4" id="reporteDocSubtitulo">
+                                VENTAS SEGÚN CORTE MES DE NOVIEMBRE
+                            </div>
+
+                            <!-- Estado de Carga -->
+                            <div id="reporteLoadingState" class="py-12 text-center text-slate-400">
+                                <i class="fa-solid fa-spinner fa-spin text-3xl text-brand-600 mb-2"></i>
+                                <p class="text-xs font-semibold">Cargando datos consolidados del mes...</p>
+                            </div>
+
+                            <!-- Tabla Matriz Oficial -->
+                            <div id="reporteTableContainer" class="hidden overflow-x-auto">
+                                <table id="tablaMatrizReporte" class="w-full border-collapse" style="border: 2px solid #000000; font-size: 11px;">
+                                    <!-- Se inyecta dinámicamente -->
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-SECCIÓN 2: REPORTE DE EGRESOS POR COMPRAS / PAGOS EN EFECTIVO -->
+            <div id="subSeccionRepEgresos" class="hidden space-y-6">
+                <!-- Header Controls Card -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 no-imprimir">
+                    <div class="space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200 uppercase tracking-wide">
+                                <i class="fa-solid fa-receipt mr-1"></i> Egresos por Sucursal
+                            </span>
+                            <h2 class="text-xl font-black text-slate-900">Egresos por Compras / Pagos en Efectivo</h2>
+                        </div>
+                        <p class="text-xs text-slate-500">Listado detallado cronológico de compras y pagos en efectivo por sucursal según día, semana o mes.</p>
+                    </div>
+
+                    <!-- Controles y Botones -->
+                    <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                        <!-- Selector de Sucursal -->
+                        <div class="flex items-center space-x-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 shadow-inner">
+                            <label for="repEgresoSucursal" class="text-xs font-bold text-slate-600">Sucursal:</label>
+                            <select id="repEgresoSucursal" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500" onchange="cargarReporteEgresos(true)">
+                                <option value="FG MATRIZ">FG MATRIZ</option>
+                                <option value="CONSTRUGAR AUTOPISTA">CONSTRUGAR AUTOPISTA</option>
+                                <option value="CONSTRUGAR AGUILA">CONSTRUGAR AGUILA</option>
+                                <option value="FG COMALAPA">FG COMALAPA</option>
+                                <option value="FG HIERROGAR">FG HIERROGAR</option>
+                                <option value="FG VIÑEDO">FG VIÑEDO</option>
+                                <option value="TODAS">-- Todas las Sucursales --</option>
+                            </select>
+                        </div>
+
+                        <!-- Selector de Tipo de Período -->
+                        <div class="flex items-center space-x-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 shadow-inner">
+                            <label for="repEgresoTipoPeriodo" class="text-xs font-bold text-slate-600">Período:</label>
+                            <select id="repEgresoTipoPeriodo" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500" onchange="cambiarTipoPeriodoEgreso()">
+                                <option value="mes">Por Mes</option>
+                                <option value="semana">Por Semana</option>
+                                <option value="dia">Por Día</option>
+                            </select>
+                        </div>
+
+                        <!-- Selectores Dinámicos de Fecha / Mes -->
+                        <div id="wrapEgresoMes" class="flex items-center space-x-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-inner">
+                            <label for="repEgresoMes" class="text-xs font-bold text-slate-600">Mes:</label>
+                            <input type="month" id="repEgresoMes" class="bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold text-slate-800" onchange="cargarReporteEgresos(true)">
+                        </div>
+
+                        <div id="wrapEgresoSemana" class="hidden flex items-center space-x-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-inner">
+                            <label for="repEgresoSemana" class="text-xs font-bold text-slate-600">Semana ref:</label>
+                            <input type="date" id="repEgresoSemana" class="bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold text-slate-800" onchange="cargarReporteEgresos(true)">
+                        </div>
+
+                        <div id="wrapEgresoDia" class="hidden flex items-center space-x-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-inner">
+                            <label for="repEgresoDia" class="text-xs font-bold text-slate-600">Día:</label>
+                            <input type="date" id="repEgresoDia" class="bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold text-slate-800" onchange="cargarReporteEgresos(true)">
+                        </div>
+
+                        <button onclick="cargarReporteEgresos(true)" title="Recargar egresos" class="bg-brand-700 hover:bg-brand-800 text-white px-3 py-2 rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                            <span class="hidden sm:inline">Actualizar</span>
+                        </button>
+
+                        <button onclick="descargarReporteEgresosExcel()" title="Descargar como Excel (.xlsx)" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5">
+                            <i class="fa-solid fa-file-excel text-emerald-200"></i>
+                            <span>Descargar Excel</span>
+                        </button>
+
+                        <button onclick="descargarReporteEgresosPDF()" title="Descargar como PDF" class="bg-rose-700 hover:bg-rose-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5">
+                            <i class="fa-solid fa-file-pdf text-rose-200"></i>
+                            <span>Descargar PDF</span>
+                        </button>
+
+                        <button onclick="imprimirReporteEgresos()" title="Imprimir reporte" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-2 rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5">
+                            <i class="fa-solid fa-print"></i>
+                            <span class="hidden sm:inline">Imprimir</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mini KPIs Egresos -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 no-imprimir">
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-receipt"></i>
+                        </div>
+                        <div>
+                            <div class="text-[10px] uppercase font-bold text-slate-500">Total Egresos Efectivo</div>
+                            <div class="text-base font-extrabold text-rose-900" id="repEgresoKpiTotal">$ 0.00</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-file-invoice"></i>
+                        </div>
+                        <div>
+                            <div class="text-[10px] uppercase font-bold text-slate-500">N° Facturas / Registros</div>
+                            <div class="text-base font-extrabold text-blue-900" id="repEgresoKpiDocs">0</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-calendar-days"></i>
+                        </div>
+                        <div>
+                            <div class="text-[10px] uppercase font-bold text-slate-500">Días con Egresos</div>
+                            <div class="text-base font-extrabold text-amber-900" id="repEgresoKpiDias">0</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-scale-balanced"></i>
+                        </div>
+                        <div>
+                            <div class="text-[10px] uppercase font-bold text-slate-500">Promedio por Egreso</div>
+                            <div class="text-base font-extrabold text-slate-900" id="repEgresoKpiPromedio">$ 0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contenedor de la Hoja Oficial de Egresos -->
+                <div class="bg-white rounded-2xl shadow-md border border-slate-300 overflow-hidden">
+                    <div class="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center text-xs text-slate-600 no-imprimir">
+                        <span class="flex items-center space-x-1.5 font-medium">
+                            <i class="fa-solid fa-sheet-plastic text-brand-600"></i>
+                            <span>Hoja de Egresos por Compras / Pagos en Efectivo</span>
+                        </span>
+                        <span id="repEgresoInfoPeriodo" class="text-[11px] font-semibold text-brand-700"></span>
+                    </div>
+
+                    <div class="p-4 sm:p-6 overflow-x-auto bg-slate-100 flex justify-center">
+                        <div id="reporteEgresosDoc" class="bg-white p-6 sm:p-8 shadow-sm border border-slate-300 rounded" style="min-width: 850px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; color: #000;">
+                            
+                            <!-- Título Central de la Sucursal (Idéntico a la imagen: MATRIZ, etc.) -->
+                            <div class="text-center font-black text-2xl uppercase tracking-wider text-black mb-1" id="repEgresoDocTitulo">
+                                MATRIZ
+                            </div>
+                            <div class="text-center font-bold text-xs uppercase tracking-wide text-slate-500 mb-4" id="repEgresoDocSubtitulo">
+                                EGRESOS POR COMPRAS Y PAGOS EN EFECTIVO
+                            </div>
+
+                            <!-- Estado de Carga -->
+                            <div id="repEgresoLoadingState" class="py-12 text-center text-slate-400">
+                                <i class="fa-solid fa-spinner fa-spin text-3xl text-brand-600 mb-2"></i>
+                                <p class="text-xs font-semibold">Cargando egresos por compras...</p>
+                            </div>
+
+                            <!-- Tabla Idéntica a la Foto -->
+                            <div id="repEgresoTableContainer" class="hidden overflow-x-auto">
+                                <table id="tablaReporteEgresosDoc" class="w-full border-collapse" style="border: 1px solid #000000; font-size: 11px;">
+                                    <!-- Inyectado dinámicamente -->
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
     </main>
 
     <!-- ================= MODAL 1: HOJA DE CORTE COMPLETA (VISTA HOJA OFICIAL) ================= -->
@@ -1598,12 +1913,22 @@
                 habilitarSelectSucursal('editLoadSucursal', true);
                 habilitarSelectSucursal('calSucursalSelect', true);
 
+                const btnRep = document.getElementById('btnReporteMensualTab');
+                if (btnRep) btnRep.classList.remove('hidden');
+
                 document.getElementById('sucursalBloqueadaAviso').classList.add('hidden');
 
             } else {
                 badgeRole.textContent = usuarioActual.sucursal;
                 badgeRole.className = 'px-2 py-0.5 rounded text-[10px] bg-emerald-400 text-brand-950 font-extrabold uppercase shadow-sm';
                 btnConfig.classList.add('hidden');
+
+                const btnRep = document.getElementById('btnReporteMensualTab');
+                if (btnRep) btnRep.classList.add('hidden');
+                const repTab = document.getElementById('reporteMensualTab');
+                if (repTab && !repTab.classList.contains('hidden')) {
+                    switchTab('kpiTab');
+                }
 
                 document.getElementById('kpiTituloPrincipal').textContent = `KPIs de ${usuarioActual.nombre}`;
                 document.getElementById('kpiSubtituloPrincipal').textContent = `Visualizando únicamente los datos y cortes correspondientes a ${usuarioActual.sucursal}.`;
@@ -1668,6 +1993,14 @@
             document.getElementById('filtroVentasFecha').value = today;
             document.getElementById('filtroVentasMes').value = today.substring(0, 7);
             document.getElementById('calMesInput').value = today.substring(0, 7);
+            const repMesInp = document.getElementById('reporteMesInput');
+            if (repMesInp) repMesInp.value = today.substring(0, 7);
+            const repEgresoMesInp = document.getElementById('repEgresoMes');
+            if (repEgresoMesInp) repEgresoMesInp.value = today.substring(0, 7);
+            const repEgresoSemInp = document.getElementById('repEgresoSemana');
+            if (repEgresoSemInp) repEgresoSemInp.value = today;
+            const repEgresoDiaInp = document.getElementById('repEgresoDia');
+            if (repEgresoDiaInp) repEgresoDiaInp.value = today;
 
             const anioSelect = document.getElementById('filtroVentasAnio');
             const currentYear = new Date().getFullYear();
@@ -1708,11 +2041,11 @@
 
         // Cambio de pestañas
         function switchTab(tabId) {
-            ['kpiTab', 'calendarioTab', 'ventasTab', 'inputTab', 'searchTab', 'editTab'].forEach(id => {
+            ['kpiTab', 'calendarioTab', 'ventasTab', 'inputTab', 'searchTab', 'editTab', 'reporteMensualTab'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.classList.add('hidden');
             });
-            ['btnKpiTab', 'btnCalendarioTab', 'btnVentasTab', 'btnInputTab', 'btnSearchTab', 'btnEditTab'].forEach(id => {
+            ['btnKpiTab', 'btnCalendarioTab', 'btnVentasTab', 'btnInputTab', 'btnSearchTab', 'btnEditTab', 'btnReporteMensualTab'].forEach(id => {
                 const btn = document.getElementById(id);
                 if (btn) {
                     btn.classList.remove('border-brand-600', 'text-brand-700', 'font-bold');
@@ -1729,7 +2062,8 @@
                 'ventasTab': 'btnVentasTab',
                 'inputTab': 'btnInputTab',
                 'searchTab': 'btnSearchTab',
-                'editTab': 'btnEditTab'
+                'editTab': 'btnEditTab',
+                'reporteMensualTab': 'btnReporteMensualTab'
             };
             const activeBtn = document.getElementById(activeBtnMap[tabId]);
             if (activeBtn) {
@@ -1743,6 +2077,18 @@
             if (tabId === 'searchTab') {
                 if (!cortesBuscadosActuales || cortesBuscadosActuales.length === 0) {
                     buscarCortes(false);
+                }
+            }
+            if (tabId === 'reporteMensualTab') {
+                if (!usuarioActual || usuarioActual.rol !== 'admin') {
+                    mostrarToast('Acceso restringido: Esta sección es exclusiva para Administradores.', 'error');
+                    switchTab('kpiTab');
+                    return;
+                }
+                if (subReporteActivo === 'egresos') {
+                    cargarReporteEgresos(false);
+                } else {
+                    cargarReporteMensual(false);
                 }
             }
         }
@@ -3418,6 +3764,865 @@
             alert('¡URL de Google Apps Script guardada exitosamente!');
             AppCache.clear();
             loadKPIs(true);
+        }
+
+        // =========================================================
+        // 11. REPORTE MENSUAL DE VENTAS (ADMIN EXCLUSIVO)
+        // =========================================================
+        let reporteMensualActualData = null;
+
+        function formatMontoReporte(val) {
+            if (val === null || val === undefined || isNaN(val) || val === 0) return '';
+            return Number(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function formatMontoTotal(val) {
+            const num = Number(val || 0);
+            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        async function cargarReporteMensual(forceRefresh = false) {
+            if (!usuarioActual || usuarioActual.rol !== 'admin') {
+                mostrarToast('Acceso denegado: Esta vista es exclusiva para Administradores.', 'error');
+                return;
+            }
+
+            const mesInput = document.getElementById('reporteMesInput');
+            let mes = mesInput ? mesInput.value : '';
+            if (!mes) {
+                mes = obtenerFechaLocal().substring(0, 7);
+                if (mesInput) mesInput.value = mes;
+            }
+
+            const scriptUrl = localStorage.getItem('gas_script_url');
+            if (!scriptUrl) {
+                mostrarToast('Configure la URL de Google Apps Script primero.', 'error');
+                return;
+            }
+
+            const cacheKey = `reporte_mensual_${mes}`;
+            if (!forceRefresh) {
+                const cached = AppCache.get(cacheKey);
+                if (cached) {
+                    renderizarReporteMensual(cached);
+                    return;
+                }
+            }
+
+            const loading = document.getElementById('reporteLoadingState');
+            const tableCont = document.getElementById('reporteTableContainer');
+            if (loading) loading.classList.remove('hidden');
+            if (tableCont) tableCont.classList.add('hidden');
+
+            try {
+                // Intentar consultar el nuevo endpoint optimizado getReporteMensual
+                const res = await fetch(`${scriptUrl}?action=getReporteMensual&mes=${mes}`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    redirect: 'follow'
+                });
+                const json = await res.json();
+
+                if (json && json.success && json.matriz) {
+                    AppCache.set(cacheKey, json);
+                    renderizarReporteMensual(json);
+                } else {
+                    // Fallback transparente usando getCortesMes
+                    console.warn('Fallback a getCortesMes para reporte mensual...', json);
+                    const fallbackData = await generarReporteMensualFallback(mes, scriptUrl);
+                    AppCache.set(cacheKey, fallbackData);
+                    renderizarReporteMensual(fallbackData);
+                }
+            } catch (err) {
+                console.error('Error al cargar reporte mensual:', err);
+                try {
+                    const fallbackData = await generarReporteMensualFallback(mes, scriptUrl);
+                    AppCache.set(cacheKey, fallbackData);
+                    renderizarReporteMensual(fallbackData);
+                } catch (fallbackErr) {
+                    console.error('Fallback también falló:', fallbackErr);
+                    if (loading) loading.classList.add('hidden');
+                    mostrarToast('Error al conectar con Google Sheets para el reporte mensual.', 'error');
+                }
+            }
+        }
+
+        async function generarReporteMensualFallback(mes, scriptUrl) {
+            const parts = mes.split('-');
+            const anio = parseInt(parts[0], 10);
+            const mesNum = parseInt(parts[1], 10);
+            const diasEnMes = new Date(anio, mesNum, 0).getDate();
+            const mesesNombres = [
+                "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
+                "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
+            ];
+            const mesNombre = mesesNombres[mesNum - 1] || "";
+
+            const res = await fetch(`${scriptUrl}?action=getCortesMes&mes=${mes}`, {
+                method: 'GET',
+                mode: 'cors',
+                redirect: 'follow'
+            });
+            const json = await res.json();
+            const cortes = (json && json.success && Array.isArray(json.data)) ? json.data : [];
+
+            let matriz = {};
+            for (let d = 1; d <= diasEnMes; d++) {
+                matriz[d] = {};
+                SUCURSALES.forEach(suc => {
+                    matriz[d][suc] = { consumidor: null, ccf: null, existe: false };
+                });
+            }
+
+            cortes.forEach(c => {
+                const dia = parseInt(c.fecha.split('-')[2], 10);
+                if (dia >= 1 && dia <= diasEnMes && matriz[dia] && matriz[dia][c.sucursal]) {
+                    matriz[dia][c.sucursal] = {
+                        consumidor: c.ventaConsumidor !== undefined && c.ventaConsumidor !== null ? c.ventaConsumidor : (c.totalIngresos || 0),
+                        ccf: c.ventaContribuyentes !== undefined && c.ventaContribuyentes !== null ? c.ventaContribuyentes : 0,
+                        existe: true
+                    };
+                }
+            });
+
+            return {
+                success: true,
+                mes: mes,
+                mesNombre: mesNombre,
+                anio: anio,
+                diasEnMes: diasEnMes,
+                sucursales: SUCURSALES,
+                matriz: matriz
+            };
+        }
+
+        function renderizarReporteMensual(data) {
+            reporteMensualActualData = data;
+            const loading = document.getElementById('reporteLoadingState');
+            const tableCont = document.getElementById('reporteTableContainer');
+            const tabla = document.getElementById('tablaMatrizReporte');
+            const subtitulo = document.getElementById('reporteDocSubtitulo');
+
+            if (subtitulo) {
+                subtitulo.textContent = `VENTAS SEGÚN CORTE MES DE ${data.mesNombre} ${data.anio}`;
+            }
+
+            const sucursales = data.sucursales && data.sucursales.length > 0 ? data.sucursales : SUCURSALES;
+            
+            let totalesConsumidor = {};
+            let totalesCcf = {};
+            sucursales.forEach(s => {
+                totalesConsumidor[s] = 0;
+                totalesCcf[s] = 0;
+            });
+
+            let granTotalMes = 0;
+            let totalConsumidorMes = 0;
+            let totalCcfMes = 0;
+            let diasConCortes = 0;
+
+            // Construcción del encabezado de dos niveles (Tier 1 y Tier 2)
+            let html = `<thead>`;
+            
+            // Tier 1 Header
+            html += `<tr style="background: #ffffff;">`;
+            html += `<th rowspan="2" style="border: 1px solid #000; padding: 6px 4px; text-align: center; width: 45px; font-weight: bold; background: #ffffff;">DIA</th>`;
+            sucursales.forEach(s => {
+                let nombreDisplay = s;
+                if (nombreDisplay === 'CONSTRUGAR AUTOPISTA') nombreDisplay = 'AUTOPISTA';
+                if (nombreDisplay === 'CONSTRUGAR AGUILA') nombreDisplay = 'AGUILA';
+                if (nombreDisplay.startsWith('FG ')) nombreDisplay = nombreDisplay.replace('FG ', '');
+                
+                html += `<th colspan="2" style="border: 1px solid #000; padding: 6px 4px; text-align: center; font-weight: bold; font-size: 11px; background: #ffffff; text-transform: uppercase;">${nombreDisplay}</th>`;
+            });
+            html += `<th rowspan="2" style="border: 1px solid #000; padding: 6px 4px; text-align: center; width: 95px; font-weight: bold; background: #ffffff;">TOTAL</th>`;
+            html += `</tr>`;
+
+            // Tier 2 Header
+            html += `<tr style="background: #ffffff;">`;
+            sucursales.forEach(() => {
+                html += `<th style="border: 1px solid #000; padding: 4px 2px; text-align: center; font-weight: normal; font-size: 10px; background: #ffffff; color: #1e293b;">consumidor</th>`;
+                html += `<th style="border: 1px solid #000; padding: 4px 2px; text-align: center; font-weight: normal; font-size: 10px; background: #ffffff; color: #1e293b;">ccf</th>`;
+            });
+            html += `</tr>`;
+            html += `</thead>`;
+
+            // Cuerpo de la tabla (Días 1 al N)
+            html += `<tbody>`;
+            for (let d = 1; d <= data.diasEnMes; d++) {
+                let diaTieneVentas = false;
+                let diaTotal = 0;
+                let rowCells = '';
+
+                sucursales.forEach(s => {
+                    const cell = (data.matriz[d] && data.matriz[d][s]) ? data.matriz[d][s] : null;
+                    const cVal = (cell && cell.consumidor > 0) ? Number(cell.consumidor) : null;
+                    const ccfVal = (cell && cell.ccf > 0) ? Number(cell.ccf) : null;
+
+                    if (cVal !== null) {
+                        totalesConsumidor[s] += cVal;
+                        totalConsumidorMes += cVal;
+                        diaTotal += cVal;
+                        diaTieneVentas = true;
+                    }
+                    if (ccfVal !== null) {
+                        totalesCcf[s] += ccfVal;
+                        totalCcfMes += ccfVal;
+                        diaTotal += ccfVal;
+                        diaTieneVentas = true;
+                    }
+
+                    // Celda consumidor
+                    rowCells += `<td style="border: 1px solid #000; padding: 3px 4px; text-align: right; background: #ffffff; font-size: 11px; white-space: nowrap;">`;
+                    if (cVal !== null) {
+                        rowCells += `<div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-size: 10px; color: #333; margin-right: 2px;">$</span><span>${formatMontoReporte(cVal)}</span></div>`;
+                    }
+                    rowCells += `</td>`;
+
+                    // Celda ccf
+                    rowCells += `<td style="border: 1px solid #000; padding: 3px 4px; text-align: right; background: #ffffff; font-size: 11px; white-space: nowrap;">`;
+                    if (ccfVal !== null) {
+                        rowCells += `<div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-size: 10px; color: #333; margin-right: 2px;">$</span><span>${formatMontoReporte(ccfVal)}</span></div>`;
+                    }
+                    rowCells += `</td>`;
+                });
+
+                if (diaTieneVentas) {
+                    diasConCortes++;
+                    granTotalMes += diaTotal;
+                }
+
+                html += `<tr style="background: #ffffff;">`;
+                html += `<td style="border: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: bold; background: #ffffff; font-size: 11px;">${d}</td>`;
+                html += rowCells;
+                
+                // Celda TOTAL diaria
+                html += `<td style="border: 1px solid #000; padding: 3px 4px; text-align: right; font-weight: 500; background: #ffffff; font-size: 11px; white-space: nowrap;">`;
+                if (diaTotal > 0) {
+                    html += `<div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-size: 10px; color: #333; margin-right: 2px;">$</span><span>${formatMontoReporte(diaTotal)}</span></div>`;
+                } else {
+                    html += `<div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-size: 10px; color: #333; margin-right: 2px;">$</span><span style="color: #94a3b8;">-</span></div>`;
+                }
+                html += `</td>`;
+                html += `</tr>`;
+            }
+
+            // ================== FILAS INFERIORES: TOTALes, SISTEMA, DIFERENCIA ==================
+            // 1. TOTALes
+            html += `<tr style="background: #ffffff; font-weight: bold;">`;
+            html += `<td style="border: 1px solid #000; padding: 5px 4px; text-align: left; font-weight: bold; background: #ffffff; font-size: 11px;">TOTALes</td>`;
+            sucursales.forEach(s => {
+                html += `<td style="border: 1px solid #000; padding: 5px 4px; text-align: right; font-weight: bold; background: #ffffff; font-size: 11px; white-space: nowrap;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-size: 10px; margin-right: 2px;">$</span><span>${formatMontoTotal(totalesConsumidor[s])}</span></div>
+                </td>`;
+                html += `<td style="border: 1px solid #000; padding: 5px 4px; text-align: right; font-weight: bold; background: #ffffff; font-size: 11px; white-space: nowrap;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-size: 10px; margin-right: 2px;">$</span><span>${formatMontoTotal(totalesCcf[s])}</span></div>
+                </td>`;
+            });
+            html += `<td style="border: 1px solid #000; padding: 5px 4px; text-align: right; font-weight: bold; background: #ffffff; font-size: 11px; white-space: nowrap;">
+                <div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-size: 10px; margin-right: 2px;">$</span><span>${formatMontoTotal(granTotalMes)}</span></div>
+            </td>`;
+            html += `</tr>`;
+
+            // 2. SISTEMA (Para cuadre contable contra sistema POS o ERP)
+            html += `<tr style="background: #ffffff; font-weight: bold;">`;
+            html += `<td style="border: 1px solid #000; padding: 4px; text-align: left; font-weight: bold; background: #ffffff; font-size: 11px;">SISTEMA</td>`;
+            sucursales.forEach((s, idx) => {
+                html += `<td style="border: 1px solid #000; padding: 2px; text-align: right; background: #ffffff;">
+                    <input type="number" step="0.01" class="w-full text-right bg-transparent text-[10px] p-0.5 focus:outline-none focus:bg-amber-50" placeholder="" oninput="recalcularDiferenciaReporte()" data-target-total="${totalesConsumidor[s]}" data-field-id="sis_${idx}_cons">
+                </td>`;
+                html += `<td style="border: 1px solid #000; padding: 2px; text-align: right; background: #ffffff;">
+                    <input type="number" step="0.01" class="w-full text-right bg-transparent text-[10px] p-0.5 focus:outline-none focus:bg-amber-50" placeholder="" oninput="recalcularDiferenciaReporte()" data-target-total="${totalesCcf[s]}" data-field-id="sis_${idx}_ccf">
+                </td>`;
+            });
+            html += `<td id="repSistemaGranTotal" style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold; background: #ffffff; font-size: 11px;"></td>`;
+            html += `</tr>`;
+
+            // 3. DIFERENCIA (Destacado en amarillo brillante #ffff00 idéntico al reporte)
+            html += `<tr style="background: #ffff00; font-weight: bold;">`;
+            html += `<td style="border: 1px solid #000; padding: 5px 4px; text-align: left; font-weight: bold; background: #ffff00; font-size: 11px;">DIFERENCIA</td>`;
+            sucursales.forEach((s, idx) => {
+                html += `<td id="dif_${idx}_cons" style="border: 1px solid #000; padding: 5px 4px; text-align: right; font-weight: bold; background: #ffff00; font-size: 11px; white-space: nowrap;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-size: 10px; margin-right: 2px;">$</span><span>${formatMontoTotal(totalesConsumidor[s])}</span></div>
+                </td>`;
+                html += `<td id="dif_${idx}_ccf" style="border: 1px solid #000; padding: 5px 4px; text-align: right; font-weight: bold; background: #ffff00; font-size: 11px; white-space: nowrap;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-size: 10px; margin-right: 2px;">$</span><span>${formatMontoTotal(totalesCcf[s])}</span></div>
+                </td>`;
+            });
+            html += `<td id="repDifGranTotal" style="border: 1px solid #000; padding: 5px 4px; text-align: right; font-weight: bold; background: #ffff00; font-size: 11px; white-space: nowrap;">
+                <div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-size: 10px; margin-right: 2px;">$</span><span>${formatMontoTotal(granTotalMes)}</span></div>
+            </td>`;
+            html += `</tr>`;
+
+            html += `</tbody>`;
+
+            if (tabla) tabla.innerHTML = html;
+            if (loading) loading.classList.add('hidden');
+            if (tableCont) tableCont.classList.remove('hidden');
+
+            // Actualizar tarjetas resumen
+            document.getElementById('repKpiConsumidor').textContent = `$${formatMontoTotal(totalConsumidorMes)}`;
+            document.getElementById('repKpiCcf').textContent = `$${formatMontoTotal(totalCcfMes)}`;
+            document.getElementById('repKpiTotal').textContent = `$${formatMontoTotal(granTotalMes)}`;
+            document.getElementById('repKpiDias').textContent = `${diasConCortes} / ${data.diasEnMes}`;
+        }
+
+        function recalcularDiferenciaReporte() {
+            const inputs = document.querySelectorAll('#tablaMatrizReporte input[data-target-total]');
+            let sistemaSumaTotal = 0;
+            let totalGeneralOriginal = 0;
+
+            inputs.forEach(inp => {
+                const targetTot = parseFloat(inp.getAttribute('data-target-total')) || 0;
+                totalGeneralOriginal += targetTot;
+                const fieldId = inp.getAttribute('data-field-id');
+                const difCellId = fieldId.replace('sis_', 'dif_');
+                const difCell = document.getElementById(difCellId);
+
+                const valStr = inp.value.trim();
+                let dif = targetTot;
+                if (valStr !== '') {
+                    const sisVal = parseFloat(valStr) || 0;
+                    dif = targetTot - sisVal;
+                    sistemaSumaTotal += sisVal;
+                }
+
+                if (difCell) {
+                    difCell.innerHTML = `<div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-size: 10px; margin-right: 2px;">$</span><span>${formatMontoTotal(dif)}</span></div>`;
+                }
+            });
+
+            const repSisGranTotal = document.getElementById('repSistemaGranTotal');
+            if (repSisGranTotal) {
+                repSisGranTotal.textContent = sistemaSumaTotal > 0 ? `$${formatMontoTotal(sistemaSumaTotal)}` : '';
+            }
+
+            const repDifGranTotal = document.getElementById('repDifGranTotal');
+            if (repDifGranTotal) {
+                const granDif = totalGeneralOriginal - sistemaSumaTotal;
+                repDifGranTotal.innerHTML = `<div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-size: 10px; margin-right: 2px;">$</span><span>${formatMontoTotal(granDif)}</span></div>`;
+            }
+        }
+
+        function descargarReporteMensualExcel() {
+            if (!reporteMensualActualData) {
+                mostrarToast('No hay datos disponibles para exportar a Excel.', 'warning');
+                return;
+            }
+
+            const d = reporteMensualActualData;
+            const sucs = d.sucursales && d.sucursales.length > 0 ? d.sucursales : SUCURSALES;
+            const totalCols = 1 + sucs.length * 2;
+
+            let ws_data = [];
+
+            // Fila 1: Título de la Empresa
+            let r0 = ['FERRETERIA FERROGAR, S.A DE C.V'];
+            for (let i = 1; i <= totalCols; i++) r0.push('');
+            ws_data.push(r0);
+
+            // Fila 2: Subtítulo
+            let r1 = [`VENTAS SEGÚN CORTE MES DE ${d.mesNombre} ${d.anio}`];
+            for (let i = 1; i <= totalCols; i++) r1.push('');
+            ws_data.push(r1);
+
+            // Fila 3: Cabecera Nivel 1 (DIA, Sucursales, TOTAL)
+            let r2 = ['DIA'];
+            sucs.forEach(s => {
+                let sName = s.startsWith('FG ') ? s.replace('FG ', '') : s;
+                if (sName === 'CONSTRUGAR AUTOPISTA') sName = 'AUTOPISTA';
+                if (sName === 'CONSTRUGAR AGUILA') sName = 'AGUILA';
+                r2.push(sName);
+                r2.push('');
+            });
+            r2.push('TOTAL');
+            ws_data.push(r2);
+
+            // Fila 4: Cabecera Nivel 2 (consumidor, ccf)
+            let r3 = [''];
+            sucs.forEach(() => {
+                r3.push('consumidor');
+                r3.push('ccf');
+            });
+            r3.push('');
+            ws_data.push(r3);
+
+            // Filas de días 1 a N
+            let colTotalsCons = {};
+            let colTotalsCcf = {};
+            sucs.forEach(s => { colTotalsCons[s] = 0; colTotalsCcf[s] = 0; });
+            let granTotal = 0;
+
+            for (let dia = 1; dia <= d.diasEnMes; dia++) {
+                let rDia = [dia];
+                let diaSum = 0;
+                sucs.forEach(s => {
+                    const cell = (d.matriz[dia] && d.matriz[dia][s]) ? d.matriz[dia][s] : null;
+                    const cons = (cell && cell.consumidor > 0) ? Number(cell.consumidor) : '';
+                    const ccf = (cell && cell.ccf > 0) ? Number(cell.ccf) : '';
+                    rDia.push(cons);
+                    rDia.push(ccf);
+                    if (typeof cons === 'number') { colTotalsCons[s] += cons; diaSum += cons; }
+                    if (typeof ccf === 'number') { colTotalsCcf[s] += ccf; diaSum += ccf; }
+                });
+                rDia.push(diaSum > 0 ? diaSum : '');
+                granTotal += diaSum;
+                ws_data.push(rDia);
+            }
+
+            // Fila TOTALes
+            let rTot = ['TOTALes'];
+            sucs.forEach(s => {
+                rTot.push(colTotalsCons[s]);
+                rTot.push(colTotalsCcf[s]);
+            });
+            rTot.push(granTotal);
+            ws_data.push(rTot);
+
+            // Fila SISTEMA
+            let rSis = ['SISTEMA'];
+            for (let i = 1; i <= totalCols; i++) rSis.push('');
+            ws_data.push(rSis);
+
+            // Fila DIFERENCIA
+            let rDif = ['DIFERENCIA'];
+            sucs.forEach(s => {
+                rDif.push(colTotalsCons[s]);
+                rDif.push(colTotalsCcf[s]);
+            });
+            rDif.push(granTotal);
+            ws_data.push(rDif);
+
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+            // Combinaciones de celdas (Merges)
+            let merges = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: totalCols } },
+                { s: { r: 1, c: 0 }, e: { r: 1, c: totalCols } },
+                { s: { r: 2, c: 0 }, e: { r: 3, c: 0 } },
+                { s: { r: 2, c: totalCols }, e: { r: 3, c: totalCols } }
+            ];
+
+            sucs.forEach((s, idx) => {
+                const cStart = 1 + idx * 2;
+                merges.push({ s: { r: 2, c: cStart }, e: { r: 2, c: cStart + 1 } });
+            });
+            ws['!merges'] = merges;
+
+            // Anchos de columna
+            let cols = [{ wch: 8 }];
+            sucs.forEach(() => {
+                cols.push({ wch: 14 });
+                cols.push({ wch: 14 });
+            });
+            cols.push({ wch: 16 });
+            ws['!cols'] = cols;
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, `Ventas_${d.mes}`);
+            XLSX.writeFile(wb, `Reporte_Ventas_${d.mes}.xlsx`);
+            mostrarToast('Reporte en Excel (.xlsx) generado y descargado correctamente.', 'success');
+        }
+
+        function descargarReporteMensualPDF() {
+            const docElement = document.getElementById('reporteMensualDoc');
+            if (!docElement || !reporteMensualActualData) {
+                mostrarToast('No hay datos disponibles para exportar a PDF.', 'warning');
+                return;
+            }
+
+            mostrarToast('Generando archivo PDF en formato horizontal (Landscape)...', 'info');
+
+            const opt = {
+                margin: [6, 6, 6, 6],
+                filename: `Reporte_Ventas_${reporteMensualActualData.mes}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'mm', format: 'letter', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(docElement).save().then(() => {
+                mostrarToast('Reporte en PDF descargado exitosamente.', 'success');
+            }).catch(err => {
+                console.error('Error al generar PDF:', err);
+                mostrarToast('Error al exportar PDF: ' + err.message, 'error');
+            });
+        }
+
+        function imprimirReporteMensual() {
+            if (!reporteMensualActualData) {
+                mostrarToast('No hay datos cargados para imprimir.', 'warning');
+                return;
+            }
+            window.print();
+        }
+
+        // =========================================================
+        // 12. GESTOR DE SUB-REPORTES Y REPORTE DE EGRESOS POR COMPRAS
+        // =========================================================
+        let subReporteActivo = 'ventas';
+        let reporteEgresosActualData = null;
+
+        function cleanSucursalName(suc) {
+            if (!suc) return '';
+            let s = String(suc).trim();
+            if (s === 'TODAS') return 'TODAS LAS SUCURSALES';
+            if (s === 'CONSTRUGAR AUTOPISTA') return 'AUTOPISTA';
+            if (s === 'CONSTRUGAR AGUILA') return 'AGUILA';
+            if (s.startsWith('FG ')) return s.replace('FG ', '');
+            return s;
+        }
+
+        function cambiarSubReporte(tipo) {
+            subReporteActivo = tipo;
+            const btnVentas = document.getElementById('subBtnRepVentas');
+            const btnEgresos = document.getElementById('subBtnRepEgresos');
+            const secVentas = document.getElementById('subSeccionRepVentas');
+            const secEgresos = document.getElementById('subSeccionRepEgresos');
+
+            if (tipo === 'ventas') {
+                btnVentas.className = 'flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-bold flex items-center justify-center space-x-2 transition bg-brand-700 text-white shadow';
+                btnEgresos.className = 'flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-semibold flex items-center justify-center space-x-2 transition bg-slate-100 text-slate-600 hover:bg-slate-200';
+                secVentas.classList.remove('hidden');
+                secEgresos.classList.add('hidden');
+                cargarReporteMensual(false);
+            } else {
+                btnEgresos.className = 'flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-bold flex items-center justify-center space-x-2 transition bg-brand-700 text-white shadow';
+                btnVentas.className = 'flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-semibold flex items-center justify-center space-x-2 transition bg-slate-100 text-slate-600 hover:bg-slate-200';
+                secEgresos.classList.remove('hidden');
+                secVentas.classList.add('hidden');
+                cargarReporteEgresos(false);
+            }
+        }
+
+        function cambiarTipoPeriodoEgreso() {
+            const tipo = document.getElementById('repEgresoTipoPeriodo').value;
+            const wrapMes = document.getElementById('wrapEgresoMes');
+            const wrapSemana = document.getElementById('wrapEgresoSemana');
+            const wrapDia = document.getElementById('wrapEgresoDia');
+
+            if (wrapMes) wrapMes.classList.add('hidden');
+            if (wrapSemana) wrapSemana.classList.add('hidden');
+            if (wrapDia) wrapDia.classList.add('hidden');
+
+            if (tipo === 'dia' && wrapDia) wrapDia.classList.remove('hidden');
+            else if (tipo === 'semana' && wrapSemana) wrapSemana.classList.remove('hidden');
+            else if (wrapMes) wrapMes.classList.remove('hidden');
+
+            cargarReporteEgresos(true);
+        }
+
+        async function cargarReporteEgresos(forceRefresh = false) {
+            if (!usuarioActual || usuarioActual.rol !== 'admin') {
+                mostrarToast('Acceso denegado: Esta vista es exclusiva para Administradores.', 'error');
+                return;
+            }
+
+            const sucursal = document.getElementById('repEgresoSucursal').value || 'FG MATRIZ';
+            const tipo = document.getElementById('repEgresoTipoPeriodo').value || 'mes';
+            const mes = document.getElementById('repEgresoMes').value || obtenerFechaLocal().substring(0, 7);
+            const semana = document.getElementById('repEgresoSemana').value || obtenerFechaLocal();
+            const dia = document.getElementById('repEgresoDia').value || obtenerFechaLocal();
+
+            const fechaRef = (tipo === 'dia') ? dia : semana;
+            const scriptUrl = localStorage.getItem('gas_script_url');
+            if (!scriptUrl) {
+                mostrarToast('Configure la URL de Google Apps Script primero.', 'error');
+                return;
+            }
+
+            const paramClave = tipo === 'mes' ? mes : fechaRef;
+            const cacheKey = `egresos_${sucursal}_${tipo}_${paramClave}`;
+
+            if (!forceRefresh) {
+                const cached = AppCache.get(cacheKey);
+                if (cached) {
+                    renderizarReporteEgresos(cached);
+                    return;
+                }
+            }
+
+            const loading = document.getElementById('repEgresoLoadingState');
+            const tableCont = document.getElementById('repEgresoTableContainer');
+            if (loading) loading.classList.remove('hidden');
+            if (tableCont) tableCont.classList.add('hidden');
+
+            try {
+                const url = `${scriptUrl}?action=getReporteEgresos&sucursal=${encodeURIComponent(sucursal)}&tipo=${tipo}&fecha=${fechaRef}&mes=${mes}`;
+                const res = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors',
+                    redirect: 'follow'
+                });
+                const json = await res.json();
+
+                if (json && json.success && Array.isArray(json.data)) {
+                    AppCache.set(cacheKey, json);
+                    renderizarReporteEgresos(json);
+                } else {
+                    console.warn('Fallback a buscarCortes para egresos...', json);
+                    const fallbackData = await generarReporteEgresosFallback(sucursal, tipo, fechaRef, mes, scriptUrl);
+                    AppCache.set(cacheKey, fallbackData);
+                    renderizarReporteEgresos(fallbackData);
+                }
+            } catch (err) {
+                console.error('Error al cargar reporte de egresos:', err);
+                try {
+                    const fallbackData = await generarReporteEgresosFallback(sucursal, tipo, fechaRef, mes, scriptUrl);
+                    AppCache.set(cacheKey, fallbackData);
+                    renderizarReporteEgresos(fallbackData);
+                } catch (fallbackErr) {
+                    console.error('Fallback de egresos también falló:', fallbackErr);
+                    if (loading) loading.classList.add('hidden');
+                    mostrarToast('Error al conectar con Google Sheets para el reporte de egresos.', 'error');
+                }
+            }
+        }
+
+        async function generarReporteEgresosFallback(sucursal, tipo, fechaRef, mesRef, scriptUrl) {
+            let strInicio = "";
+            let strFin = "";
+            let rangoTexto = "";
+
+            if (tipo === "dia") {
+                strInicio = fechaRef;
+                strFin = fechaRef;
+                rangoTexto = `Día ${fechaRef}`;
+            } else if (tipo === "semana") {
+                const parts = fechaRef.split("-");
+                const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                const day = d.getDay();
+                const diffToMon = d.getDate() - day + (day === 0 ? -6 : 1);
+                const inicio = new Date(d.setDate(diffToMon));
+                const fin = new Date(inicio);
+                fin.setDate(fin.getDate() + 6);
+                const pad = n => String(n).padStart(2, '0');
+                strInicio = `${inicio.getFullYear()}-${pad(inicio.getMonth() + 1)}-${pad(inicio.getDate())}`;
+                strFin = `${fin.getFullYear()}-${pad(fin.getMonth() + 1)}-${pad(fin.getDate())}`;
+                rangoTexto = `Semana del ${strInicio} al ${strFin}`;
+            } else {
+                const parts = mesRef.split("-");
+                const year = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10);
+                const dias = new Date(year, month, 0).getDate();
+                const pad = n => String(n).padStart(2, '0');
+                strInicio = `${year}-${pad(month)}-01`;
+                strFin = `${year}-${pad(month)}-${pad(dias)}`;
+                rangoTexto = `Mes de ${mesRef}`;
+            }
+
+            const res = await fetch(`${scriptUrl}?action=getCortesMes&mes=${mesRef}`, {
+                method: 'GET',
+                mode: 'cors',
+                redirect: 'follow'
+            });
+            const json = await res.json();
+            const cortes = (json && json.success && Array.isArray(json.data)) ? json.data : [];
+
+            let egresosList = [];
+            let totalGen = 0;
+            let diasSet = new Set();
+
+            for (const c of cortes) {
+                if (c.fecha >= strInicio && c.fecha <= strFin) {
+                    if (!sucursal || sucursal === 'TODAS' || c.sucursal.toUpperCase() === sucursal.toUpperCase()) {
+                        // Consultar detalle completo del corte para obtener los egresos
+                        try {
+                            const resDet = await fetch(`${scriptUrl}?action=obtenerCorteDetalle&sucursal=${encodeURIComponent(c.sucursal)}&fecha=${c.fecha}`);
+                            const jsonDet = await resDet.json();
+                            if (jsonDet && jsonDet.success && jsonDet.data && Array.isArray(jsonDet.data.egresosCompras)) {
+                                jsonDet.data.egresosCompras.forEach(item => {
+                                    const m = parseFloat(item.monto) || 0;
+                                    if (m > 0 || item.proveedor || item.factura) {
+                                        const fParts = c.fecha.split("-");
+                                        const fCorta = `${parseInt(fParts[2], 10)}/${parseInt(fParts[1], 10)}/${fParts[0]}`;
+                                        egresosList.push({
+                                            fecha: c.fecha,
+                                            fechaFormateada: fCorta,
+                                            sucursal: c.sucursal,
+                                            detalle: item.proveedor || "",
+                                            documento: item.factura || "",
+                                            monto: m
+                                        });
+                                        totalGen += m;
+                                        diasSet.add(c.fecha);
+                                    }
+                                });
+                            }
+                        } catch(e) {}
+                    }
+                }
+            }
+
+            egresosList.sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+            return {
+                success: true,
+                sucursal: sucursal,
+                tipo: tipo,
+                rangoTexto: rangoTexto,
+                fechaInicio: strInicio,
+                fechaFin: strFin,
+                totalGeneral: totalGen,
+                cantidadRegistros: egresosList.length,
+                diasConRegistros: diasSet.size,
+                data: egresosList
+            };
+        }
+
+        function renderizarReporteEgresos(data) {
+            reporteEgresosActualData = data;
+            const loading = document.getElementById('repEgresoLoadingState');
+            const tableCont = document.getElementById('repEgresoTableContainer');
+            const tabla = document.getElementById('tablaReporteEgresosDoc');
+            const docTitulo = document.getElementById('repEgresoDocTitulo');
+            const docSubtitulo = document.getElementById('repEgresoDocSubtitulo');
+            const infoPeriodo = document.getElementById('repEgresoInfoPeriodo');
+
+            const nombreLimpio = cleanSucursalName(data.sucursal);
+            if (docTitulo) docTitulo.textContent = nombreLimpio;
+            if (docSubtitulo) docSubtitulo.textContent = `EGRESOS POR COMPRAS Y PAGOS EN EFECTIVO - ${data.rangoTexto.toUpperCase()}`;
+            if (infoPeriodo) infoPeriodo.textContent = `${data.rangoTexto}`;
+
+            let html = `<thead>`;
+            html += `<tr style="background: #ffffff;">`;
+            html += `<th style="border: 1px solid #000; padding: 6px 4px; text-align: center; width: 110px; font-weight: bold; background: #ffffff; font-size: 11px;">FECHA</th>`;
+            html += `<th style="border: 1px solid #000; padding: 6px 4px; text-align: left; font-weight: bold; background: #ffffff; font-size: 11px;">DETALLE</th>`;
+            html += `<th style="border: 1px solid #000; padding: 6px 4px; text-align: left; width: 180px; font-weight: bold; background: #ffffff; font-size: 11px;">N DE DOCUMENTO</th>`;
+            html += `<th style="border: 1px solid #000; padding: 6px 4px; text-align: right; width: 130px; font-weight: bold; background: #ffffff; font-size: 11px;">TOTAL</th>`;
+            html += `</tr>`;
+            html += `</thead>`;
+
+            html += `<tbody>`;
+            if (!data.data || data.data.length === 0) {
+                html += `<tr><td colspan="4" style="border: 1px solid #000; padding: 24px; text-align: center; color: #64748b; font-weight: 600; font-size: 12px;">No se encontraron registros de egresos por compras en este período para ${nombreLimpio}.</td></tr>`;
+            } else {
+                data.data.forEach(item => {
+                    html += `<tr style="background: #ffffff;">`;
+                    html += `<td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-size: 11px; white-space: nowrap;">${item.fechaFormateada || item.fecha}</td>`;
+                    html += `<td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 11px; font-weight: 500;">${item.detalle || '-'}</td>`;
+                    html += `<td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 11px; white-space: nowrap;">${item.documento || '-'}</td>`;
+                    html += `<td style="border: 1px solid #000; padding: 4px 6px; text-align: right; font-size: 11px; white-space: nowrap;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-size: 10px; color: #333; margin-right: 2px;">$</span><span>${formatMontoReporte(item.monto)}</span></div>
+                    </td>`;
+                    html += `</tr>`;
+                });
+            }
+
+            // Fila de Total General
+            html += `<tr style="background: #ffffff; font-weight: bold;">`;
+            html += `<td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; font-size: 11px;"></td>`;
+            html += `<td style="border: 1px solid #000; padding: 6px; text-align: left; font-weight: bold; font-size: 11px;">TOTAL</td>`;
+            html += `<td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; font-size: 11px;"></td>`;
+            html += `<td style="border: 1px solid #000; padding: 6px; text-align: right; font-weight: bold; font-size: 11px; white-space: nowrap;">
+                <div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-size: 10px; margin-right: 2px;">$</span><span>${formatMontoTotal(data.totalGeneral)}</span></div>
+            </td>`;
+            html += `</tr>`;
+
+            html += `</tbody>`;
+
+            if (tabla) tabla.innerHTML = html;
+            if (loading) loading.classList.add('hidden');
+            if (tableCont) tableCont.classList.remove('hidden');
+
+            // Actualizar Mini KPIs
+            const cant = data.cantidadRegistros || (data.data ? data.data.length : 0);
+            const total = data.totalGeneral || 0;
+            const prom = cant > 0 ? (total / cant) : 0;
+
+            document.getElementById('repEgresoKpiTotal').textContent = `$${formatMontoTotal(total)}`;
+            document.getElementById('repEgresoKpiDocs').textContent = cant;
+            document.getElementById('repEgresoKpiDias').textContent = data.diasConRegistros !== undefined ? data.diasConRegistros : '-';
+            document.getElementById('repEgresoKpiPromedio').textContent = `$${formatMontoTotal(prom)}`;
+        }
+
+        function descargarReporteEgresosExcel() {
+            if (!reporteEgresosActualData || !reporteEgresosActualData.data) {
+                mostrarToast('No hay datos disponibles para exportar a Excel.', 'warning');
+                return;
+            }
+
+            const d = reporteEgresosActualData;
+            const nombreSuc = cleanSucursalName(d.sucursal);
+
+            let ws_data = [];
+
+            // Fila 1: Título Sucursal
+            ws_data.push([nombreSuc, '', '', '']);
+
+            // Fila 2: Subtítulo
+            ws_data.push([`EGRESOS POR COMPRAS Y PAGOS EN EFECTIVO - ${d.rangoTexto.toUpperCase()}`, '', '', '']);
+
+            // Fila 3: Cabeceras
+            ws_data.push(['FECHA', 'DETALLE', 'N DE DOCUMENTO', 'TOTAL']);
+
+            // Filas de datos
+            d.data.forEach(item => {
+                ws_data.push([
+                    item.fechaFormateada || item.fecha,
+                    item.detalle || '',
+                    item.documento || '',
+                    Number(item.monto || 0)
+                ]);
+            });
+
+            // Fila de Total
+            ws_data.push(['', 'TOTAL', '', Number(d.totalGeneral || 0)]);
+
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+            // Combinaciones de celdas
+            ws['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
+                { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }
+            ];
+
+            // Anchos de columna
+            ws['!cols'] = [
+                { wch: 14 },
+                { wch: 40 },
+                { wch: 24 },
+                { wch: 16 }
+            ];
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, `Egresos_${nombreSuc}`);
+            XLSX.writeFile(wb, `Egresos_${nombreSuc}_${d.tipo}.xlsx`);
+            mostrarToast('Reporte de egresos en Excel descargado correctamente.', 'success');
+        }
+
+        function descargarReporteEgresosPDF() {
+            const docElement = document.getElementById('reporteEgresosDoc');
+            if (!docElement || !reporteEgresosActualData) {
+                mostrarToast('No hay datos disponibles para exportar a PDF.', 'warning');
+                return;
+            }
+
+            mostrarToast('Generando archivo PDF de egresos por compras...', 'info');
+
+            const nombreSuc = cleanSucursalName(reporteEgresosActualData.sucursal);
+            const opt = {
+                margin: [8, 8, 8, 8],
+                filename: `Egresos_${nombreSuc}_${reporteEgresosActualData.tipo}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(docElement).save().then(() => {
+                mostrarToast('PDF de egresos descargado exitosamente.', 'success');
+            }).catch(err => {
+                console.error('Error al generar PDF de egresos:', err);
+                mostrarToast('Error al exportar PDF: ' + err.message, 'error');
+            });
+        }
+
+        function imprimirReporteEgresos() {
+            if (!reporteEgresosActualData) {
+                mostrarToast('No hay datos cargados para imprimir.', 'warning');
+                return;
+            }
+            window.print();
         }
     </script>
 </body>
